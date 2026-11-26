@@ -8,7 +8,7 @@ import MosaicCover from "../../components/mosaic/MosaicCover";
 const ROLES = ["UMKM penjahit", "Pabrik", "Lainnya"] as const;
 
 const INFO = [
-  { k: "Email", v: "halo@clearanceloop.id" },
+  { k: "Email", v: "halo@kainara.id" },
   { k: "WhatsApp", v: "+62 8xx-xxxx-xxxx" },
   { k: "Daerah awal", v: "Pilot regional, daerah menyusul" },
 ];
@@ -140,7 +140,7 @@ export default function KontakView() {
 
           <motion.button
             type="submit"
-            whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.96 }}
             className="w-fit rounded-full bg-brand px-7 py-3.5 text-[16px] font-medium text-on-dark transition-colors hover:bg-brand-hover"
           >
             Kirim pesan

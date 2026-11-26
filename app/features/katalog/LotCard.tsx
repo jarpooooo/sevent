@@ -95,6 +95,10 @@ export function LotCard({ lot, index = 0 }: { lot: Lot; index?: number }) {
           className="object-cover"
           style={{ objectPosition: lot.focus }}
         />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-[10px] ring-1 ring-inset ring-black/10"
+        />
         <MosaicCover
           cols={4}
           rows={3}

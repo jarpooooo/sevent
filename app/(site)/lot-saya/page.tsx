@@ -3,7 +3,7 @@ import RoleGuard from "../../features/auth/RoleGuard";
 import LotSayaView from "../../features/pabrik/LotSayaView";
 
 export const metadata: Metadata = {
-  title: "Lot saya — ClearanceLoop",
+  title: "Lot saya | Kainara",
   description: "Kelola lot sisa produksi pabrikmu. Demo, data contoh.",
 };
 

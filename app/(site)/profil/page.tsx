@@ -3,7 +3,7 @@ import RoleGuard from "../../features/auth/RoleGuard";
 import ProfilView from "../../features/profil/ProfilView";
 
 export const metadata: Metadata = {
-  title: "Profil — ClearanceLoop",
+  title: "Profil | Kainara",
   description: "Akun, verifikasi usaha, alamat, dan notifikasi. Demo, data contoh.",
 };
 

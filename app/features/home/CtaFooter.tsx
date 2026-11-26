@@ -3,9 +3,10 @@
 import { AnimatePresence, m as motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
+import { KainaraWordmark } from "../../components/brand/KainaraLogo";
 import { Icon } from "../../components/ui/icons";
 
-const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE = [0.2, 0, 0, 1] as const;
 
 export default function CtaFooter() {
   const [value, setValue] = useState("");
@@ -14,18 +15,18 @@ export default function CtaFooter() {
   return (
     <footer
       id="mulai"
-      className="relative min-h-[680px] overflow-hidden bg-inverse lg:h-svh lg:min-h-[640px]"
+      className="relative flex min-h-[640px] flex-col overflow-hidden bg-inverse lg:min-h-[calc(100svh-72px)]"
     >
       <Image src="/images/cta.webp" alt="" fill sizes="100vw" className="object-cover" />
-      {/* Panel kaca: tinggi penuh di mobile, ~80% di desktop supaya foto gudang tetap terlihat di bawah */}
-      <div className="relative flex min-h-[680px] flex-col bg-glass backdrop-blur-[14px] lg:h-[80%] lg:min-h-0">
-        <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-4 py-6 sm:px-10 md:py-8">
-          <div className="flex items-center gap-2.5 text-on-dark">
-            <span aria-hidden="true" className="size-5 rounded-full border-2 border-on-dark" />
-            <span className="font-display text-[20px] tracking-[-0.02em]">ClearanceLoop</span>
+
+      {/* Panel kaca: tinggi mengikuti konten (tidak pernah meluber) agar baris penutup tetap rapi di dalam panel */}
+      <div className="relative flex flex-col bg-glass backdrop-blur-[14px]">
+        <div className="mx-auto flex w-full max-w-[1440px] flex-col px-5 pb-7 pt-10 sm:px-10 md:pb-8 md:pt-12">
+          <div className="flex items-center">
+            <KainaraWordmark variant="dark" className="h-[26px] w-auto" />
           </div>
 
-          <h2 className="font-display mt-12 text-[clamp(40px,5.7vw,64px)] leading-[1.03] tracking-[-0.035em] text-on-dark md:mt-[72px]">
+          <h2 className="font-display mt-10 text-[clamp(38px,5.2vw,60px)] leading-[1.04] tracking-[-0.035em] text-on-dark md:mt-14">
             {["Cari bahan?", "Mulai dari satu lot."].map((line, i) => (
               <span key={line} className="block overflow-hidden pb-[0.08em]">
                 <motion.span
@@ -33,19 +34,19 @@ export default function CtaFooter() {
                   initial={{ y: "105%" }}
                   whileInView={{ y: "0%" }}
                   viewport={{ once: true, margin: "0px 0px -20% 0px" }}
-                  transition={{ duration: 0.9, ease: EASE, delay: i * 0.12 }}
+                  transition={{ duration: 0.8, ease: EASE, delay: i * 0.1 }}
                 >
                   {line}
                 </motion.span>
               </span>
             ))}
           </h2>
-          <p className="mt-6 max-w-[480px] text-[16px] leading-6 text-on-dark-soft">
+          <p className="mt-5 max-w-[480px] text-[16px] leading-6 text-on-dark-soft">
             Tinggalkan emailmu dan kami kabari saat lot pertama di daerahmu terbuka.
           </p>
 
           <form
-            className="mt-8 flex max-w-[460px] gap-2"
+            className="mt-7 flex max-w-[460px] gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               if (value.trim()) setSent(true);
@@ -67,8 +68,8 @@ export default function CtaFooter() {
             <motion.button
               type="submit"
               aria-label="Kirim"
-              whileTap={{ scale: 0.94 }}
-              className="flex size-[52px] shrink-0 items-center justify-center rounded-[2px] bg-card text-[18px] transition-colors hover:bg-brand-soft"
+              whileTap={{ scale: 0.96 }}
+              className="flex size-[52px] shrink-0 items-center justify-center rounded-[2px] bg-card text-[18px] text-text transition-colors hover:bg-brand-soft"
             >
               <Icon name="arrow-up-right" size={20} />
             </motion.button>
@@ -82,7 +83,7 @@ export default function CtaFooter() {
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease: EASE }}
+                  transition={{ duration: 0.3, ease: EASE }}
                 >
                   Terima kasih. Kami kabari saat lot pertama di daerahmu terbuka.
                 </motion.span>
@@ -90,13 +91,16 @@ export default function CtaFooter() {
             </AnimatePresence>
           </p>
 
-          {/* Teks penutup ada di dalam panel, di bawah kolom email */}
-          <div className="mt-auto flex flex-col justify-between gap-2 pt-10 text-[14px] text-on-dark-soft sm:flex-row">
-            <p>© 2026 ClearanceLoop (nama kerja)</p>
-            <p>Dibuat untuk SEVENT X Software Development</p>
+          {/* Baris penutup terkunci rapi di dalam panel dengan garis pemisah tipis */}
+          <div className="mt-8 flex flex-col justify-between gap-2 border-t border-on-dark/15 pt-5 text-[14px] text-on-dark-soft sm:flex-row sm:items-center md:mt-10">
+            <p>© 2026 Kainara</p>
+            <p>Pasar B2B sisa produksi tekstil untuk UMKM dan pabrik</p>
           </div>
         </div>
       </div>
+
+      {/* Pita foto gudang di bagian bawah footer: selalu tampil bersih di bawah panel kaca */}
+      <div aria-hidden="true" className="min-h-[120px] flex-1" />
     </footer>
   );
 }

@@ -15,9 +15,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
   const lot = await getLot(slug);
-  if (!lot) return { title: "Lot tidak ditemukan — ClearanceLoop" };
+  if (!lot) return { title: "Lot tidak ditemukan | Kainara" };
   return {
-    title: `${lot.title} — Katalog ClearanceLoop`,
+    title: `${lot.title} | Katalog Kainara`,
     description: `${lot.notes} Contoh demo.`,
   };
 }

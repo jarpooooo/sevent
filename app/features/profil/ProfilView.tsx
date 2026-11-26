@@ -4,6 +4,7 @@ import { AnimatePresence, m as motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { panel } from "../../components/ui/styles";
+import UserAvatar from "../../components/ui/UserAvatar";
 import { logout, type Role, useAccount, useRole } from "../auth/session";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -90,12 +91,17 @@ export default function ProfilView() {
 
             <section aria-label="Akun" className={`${panel} flex flex-col gap-4 p-6`}>
               <div className="flex flex-wrap items-center gap-4">
-                <span className="flex size-14 items-center justify-center rounded-full bg-brand text-[16px] font-medium text-surface">
-                  {a.initials}
-                </span>
+                <UserAvatar
+                  photoURL={a.photoURL}
+                  initials={a.initials}
+                  sizeClass="size-14"
+                  textClass="text-[16px]"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-[20px] tracking-[-0.01em]">{a.name}</p>
-                  <p className="text-[13px] text-text-muted">{a.kind}</p>
+                  <p className="text-[13px] text-text-muted">
+                    {a.kind} · {a.provider === "google" ? "Masuk dengan Google" : "Akun demo"}
+                  </p>
                 </div>
                 <div className="flex gap-2.5">
                   <button

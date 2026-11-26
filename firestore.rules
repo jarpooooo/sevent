@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// ClearanceLoop (proyek kainara-id). Prinsip: tolak semua, lalu buka seperlunya.
+// Kainara (proyek kainara-id). Prinsip: tolak semua, lalu buka seperlunya.
 //  - users/{uid}  : dibuat sekali oleh pemiliknya saat login pertama (peran tidak bisa diubah klien).
 //  - lots/{id}    : katalog bisa dibaca siapa saja; hanya pabrik pemilik yang menulis.
 //  - orders/{id}  : hanya pembeli dan pabrik terkait yang membaca; UMKM membuat; pabrik mengubah status.
@@ -19,7 +19,7 @@ service cloud.firestore {
       allow read: if signedIn() && request.auth.uid == uid;
       allow create: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['role', 'name', 'email', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['role', 'name', 'email', 'photoURL', 'createdAt'])
         && request.resource.data.role in ['umkm', 'pabrik'];
       allow update, delete: if false;
     }

@@ -231,7 +231,7 @@ export default function AlurKerja() {
                         show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
                       }}
                     >
-                      <motion.div whileTap={{ scale: 0.97 }} className="w-fit">
+                      <motion.div whileTap={{ scale: 0.96 }} className="w-fit">
                         <Link
                           href={p.cta.href}
                           className="block rounded-full bg-card px-[26px] py-3.5 text-[16px] font-medium text-brand transition-colors hover:bg-brand-soft md:py-[clamp(10px,1.8svh,14px)]"

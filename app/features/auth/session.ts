@@ -3,16 +3,21 @@
 import { useMemo, useSyncExternalStore } from "react";
 
 /**
- * Sesi login. Akun dummy: tanpa server, password, atau token; peran yang dipilih disimpan di
- * localStorage browser. Login Google (Firebase Auth, lihat app/lib/auth.ts) mengisi sesi yang sama
- * dengan nama dan email. Navbar dan akses halaman mengikuti peran di sesi ini.
+ * Sesi login. Mendukung dua jalur:
+ *  - Login Google sungguhan (Firebase Auth + Firestore users/{uid}, provider: "google").
+ *  - Akun demo lokal tanpa server (provider: "demo").
+ * Navbar, profil, checkout, dan pembatas halaman mengikuti sesi ini.
  */
 export type Role = "umkm" | "pabrik";
+export type AuthProviderKind = "google" | "demo";
 
 export type Account = {
   role: Role;
+  provider: AuthProviderKind;
+  uid?: string;
   name: string;
   initials: string;
+  photoURL?: string;
   /** teks pada chip akun di navbar */
   chip: string;
   kind: string;
@@ -25,6 +30,7 @@ export type Account = {
 export const ACCOUNTS: Record<Role, Account> = {
   umkm: {
     role: "umkm",
+    provider: "demo",
     name: "Sari Jahit",
     initials: "SJ",
     chip: "Sari Jahit · UMKM",
@@ -36,6 +42,7 @@ export const ACCOUNTS: Record<Role, Account> = {
   },
   pabrik: {
     role: "pabrik",
+    provider: "demo",
     name: "Pabrik Contoh",
     initials: "PC",
     chip: "Pabrik Contoh · Pabrik",
@@ -49,8 +56,15 @@ export const ACCOUNTS: Record<Role, Account> = {
 
 const KEY = "cl-session-v1";
 
-/** Sesi tersimpan. Akun dummy hanya punya peran; login Firebase menambah nama dan email Google. */
-export type SessionData = { role: Role; name?: string; email?: string };
+/** Sesi tersimpan. Akun demo hanya menyimpan peran; login Google menyimpan uid, nama, email, dan foto. */
+export type SessionData = {
+  role: Role;
+  provider?: AuthProviderKind;
+  uid?: string;
+  name?: string;
+  email?: string;
+  photoURL?: string;
+};
 
 let raw: string | null | undefined;
 let current: SessionData | null = null;
@@ -58,7 +72,7 @@ const subs = new Set<() => void>();
 
 function parse(r: string | null): SessionData | null {
   if (!r) return null;
-  if (r === "umkm" || r === "pabrik") return { role: r }; // format lama
+  if (r === "umkm" || r === "pabrik") return { role: r, provider: "demo" };
   try {
     const j = JSON.parse(r) as SessionData;
     return j.role === "umkm" || j.role === "pabrik" ? j : null;
@@ -67,7 +81,7 @@ function parse(r: string | null): SessionData | null {
   }
 }
 
-function read(): SessionData | null {
+export function readSession(): SessionData | null {
   if (typeof window === "undefined") return null;
   const r = window.localStorage.getItem(KEY);
   if (r === raw) return current;
@@ -87,7 +101,7 @@ function subscribe(cb: () => void) {
 
 /** undefined = belum diketahui (server dan hidrasi), null = belum login. Snapshot stabil selama sesi tak berubah. */
 export function useSession(): SessionData | null | undefined {
-  return useSyncExternalStore(subscribe, read, () => undefined);
+  return useSyncExternalStore(subscribe, readSession, () => undefined);
 }
 
 export function useRole(): Role | null | undefined {
@@ -103,26 +117,40 @@ const initialsOf = (name: string) =>
     .map((w) => w[0]!.toUpperCase())
     .join("");
 
-/** Akun yang ditampilkan: data contoh peran, ditimpa nama dan email Google bila login lewat Firebase. */
+/** Akun yang ditampilkan: data contoh peran, ditimpa profil Google bila login lewat Firebase Auth. */
 export function useAccount(): Account | null | undefined {
   const s = useSession();
   return useMemo(() => {
     if (s === undefined) return undefined;
     if (!s) return null;
     const base = ACCOUNTS[s.role];
-    if (!s.name) return base;
+    const provider: AuthProviderKind = s.provider ?? (s.email || s.uid ? "google" : "demo");
+    if (!s.name) return { ...base, provider };
     return {
       ...base,
+      provider,
+      uid: s.uid,
       name: s.name,
       initials: initialsOf(s.name) || base.initials,
+      photoURL: s.photoURL,
       chip: `${s.name} · ${s.role === "umkm" ? "UMKM" : "Pabrik"}`,
       email: s.email ?? base.email,
     };
   }, [s]);
 }
 
-export function login(role: Role, profile?: { name?: string; email?: string }) {
-  const data: SessionData = { role, ...(profile?.name ? profile : {}) };
+export function login(
+  role: Role,
+  profile?: { uid?: string; name?: string; email?: string; photoURL?: string; provider?: AuthProviderKind },
+) {
+  const data: SessionData = {
+    role,
+    provider: profile?.provider ?? (profile?.name || profile?.uid ? "google" : "demo"),
+    ...(profile?.uid ? { uid: profile.uid } : {}),
+    ...(profile?.name ? { name: profile.name } : {}),
+    ...(profile?.email ? { email: profile.email } : {}),
+    ...(profile?.photoURL ? { photoURL: profile.photoURL } : {}),
+  };
   window.localStorage.setItem(KEY, JSON.stringify(data));
   subs.forEach((f) => f());
 }

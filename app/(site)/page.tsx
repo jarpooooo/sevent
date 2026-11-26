@@ -14,7 +14,7 @@ const CtaFooter = dynamic(() => import("../features/home/CtaFooter"));
 const STORY = [
   "Sisa produksi pabrik terlalu sering berakhir di pengepul dengan harga murah.",
   "UMKM penjahit lalu membeli bahan yang sama dengan harga yang jauh lebih tinggi.",
-  "ClearanceLoop mempertemukan keduanya langsung, di harga yang adil bagi dua sisi.",
+  "Kainara mempertemukan keduanya langsung, di harga yang adil bagi dua sisi.",
   "Satu lot dicatat, dijual regional, dilelang nasional, lalu sampai ke penjahit.",
 ];
 
@@ -24,7 +24,7 @@ export default function Home() {
       <main>
         <StickyScrollStory
           texts={STORY}
-          introTitle="ClearanceLoop"
+          introTitle="Kainara"
           image="/images/hero.webp"
           finale={{
             title: ["Bahan yang adil.", "Jahitan yang jalan."],

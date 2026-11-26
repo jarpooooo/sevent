@@ -3,7 +3,7 @@
 import { AnimatePresence, m as motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
 import { Icon } from "../../components/ui/icons";
 import { panel } from "../../components/ui/styles";
@@ -11,6 +11,7 @@ import { useAuction } from "../katalog/auction";
 import Counter from "../../components/ui/Counter";
 import type { Lot } from "../../lib/domain/types";
 import { num, rupiah } from "../../lib/format";
+import { useAccount } from "../auth/session";
 import { addOrder, type Pickup } from "./orders";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -20,6 +21,7 @@ const h2 = "font-display text-[22px] leading-tight tracking-[-0.02em]";
 function Checkout({ lot, initialQty }: { lot: Lot; initialQty: number }) {
   const id = useId();
   const router = useRouter();
+  const account = useAccount();
   const auction = useAuction(lot);
   const price = auction ? auction.price : (lot.price ?? 0);
 
@@ -169,7 +171,10 @@ function Checkout({ lot, initialQty }: { lot: Lot; initialQty: number }) {
       {/* Rincian */}
       <aside aria-label="Rincian pembayaran" className={`${card} lg:sticky lg:top-[96px]`}>
         <h2 className={h2}>Rincian pembayaran</h2>
-        <p className="mt-2 text-[13px] text-text-muted">Atas nama Sari Jahit · UMKM (akun demo)</p>
+        <p className="mt-2 text-[13px] text-text-muted">
+          Atas nama {account?.name ?? "Sari Jahit"} · {account?.role === "pabrik" ? "Pabrik" : "UMKM"}
+          {account?.provider === "google" ? " · Google" : " (akun demo)"}
+        </p>
 
         <dl className="mt-5 border-y border-line [&>div]:flex [&>div]:items-baseline [&>div]:justify-between [&>div]:gap-4 [&>div]:py-3 [&>div+div]:border-t [&>div+div]:border-line">
           <div>
@@ -219,8 +224,12 @@ function Checkout({ lot, initialQty }: { lot: Lot; initialQty: number }) {
   );
 }
 
-/** Lot dan jumlah dibaca di server (halaman checkout) lalu dikirim sebagai props. */
-export default function CheckoutView({ lot, qty }: { lot?: Lot; qty: number }) {
+/** Lot dan jumlah dibaca dari query string di klien supaya halaman checkout bisa di-export secara statis. */
+export default function CheckoutView({ lots }: { lots: Lot[] }) {
+  const params = useSearchParams();
+  const slug = params.get("lot");
+  const qty = Number(params.get("qty")) || 0;
+  const lot = slug ? lots.find((l) => l.slug === slug) : undefined;
   return (
     <section aria-label="Checkout" className="pt-[72px]">
       <div className="mx-auto max-w-[1440px] px-5 pb-16 pt-6 sm:px-10 lg:px-16">

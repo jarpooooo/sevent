@@ -3,7 +3,7 @@ import RoleGuard from "../../features/auth/RoleGuard";
 import PesananView from "../../features/pesanan/PesananView";
 
 export const metadata: Metadata = {
-  title: "Pesanan saya — ClearanceLoop",
+  title: "Pesanan saya | Kainara",
   description: "Pantau pesanan dari bayar sampai bahan tiba. Demo, belum ada transaksi sungguhan.",
 };
 

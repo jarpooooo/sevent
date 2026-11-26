@@ -1,12 +1,12 @@
 "use client";
 
-import { m as motion, useInView } from "motion/react";
+import { AnimatePresence, m as motion, useInView } from "motion/react";
 import { useSafeReducedMotion } from "../../components/motion/useSafeReducedMotion";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
-const EASE = [0.16, 1, 0.3, 1] as const;
-const EASE_CSS = "cubic-bezier(0.16, 1, 0.3, 1)";
+const EASE = [0.2, 0, 0, 1] as const;
+const EASE_CSS = "cubic-bezier(0.2, 0, 0, 1)";
 const COLS = 9;
 const ROWS = 6;
 
@@ -19,8 +19,8 @@ function StockDots() {
     <div
       ref={ref}
       aria-hidden="true"
-      className="mt-3 grid grid-cols-9 gap-x-[clamp(14px,3vw,38px)] gap-y-[38px] py-1 lg:mt-0"
-      style={{ maxWidth: 366 }}
+      className="mt-auto grid grid-cols-9 gap-x-[clamp(14px,3vw,36px)] gap-y-9 pt-6"
+      style={{ maxWidth: 368 }}
     >
       {Array.from({ length: COLS * ROWS }, (_, i) => {
         const r = Math.floor(i / COLS);
@@ -31,8 +31,8 @@ function StockDots() {
             className="size-[6px] rounded-full bg-dot-stock"
             style={{
               opacity: seen ? 1 : 0,
-              transform: reduce ? undefined : `scale(${seen ? 1 : 0})`,
-              transition: `opacity 0.5s ${EASE_CSS} ${seen ? 0.1 + (r + c) * 0.045 : 0}s, transform 0.5s ${EASE_CSS} ${seen ? 0.1 + (r + c) * 0.045 : 0}s`,
+              transform: reduce ? undefined : `scale(${seen ? 1 : 0.8})`,
+              transition: `opacity 0.45s ${EASE_CSS} ${seen ? 0.08 + (r + c) * 0.04 : 0}s, transform 0.45s ${EASE_CSS} ${seen ? 0.08 + (r + c) * 0.04 : 0}s`,
             }}
           />
         );
@@ -41,55 +41,135 @@ function StockDots() {
   );
 }
 
-/** Dua benang tergambar, lalu penanda ochre menyusuri benang pertama: status bergerak sampai tiba. */
-function Thread() {
-  const ref = useRef<HTMLDivElement>(null);
-  const seen = useInView(ref, { once: true, margin: "0px 0px -20% 0px" });
-  const reduce = useSafeReducedMotion();
-  const draw = (delay: number) => ({
-    initial: false as const,
-    animate: { pathLength: seen || reduce ? 1 : 0 },
-    transition: { duration: reduce ? 0 : 1.6, ease: EASE, delay },
-  });
+type OrderStage = {
+  code: string;
+  label: string;
+  note: string;
+};
+
+/** Tahapan nyata perjalanan transaksi sesuai aturan PJP & pembaruan tim Kainara. */
+const ORDER_STAGES: OrderStage[] = [
+  {
+    code: "01",
+    label: "Dibayar",
+    note: "Pembayaran tercatat di PJP, dana belum diteruskan ke pabrik.",
+  },
+  {
+    code: "02",
+    label: "Disiapkan",
+    note: "Pabrik menimbang lot dan mengirim bukti foto beserta dokumen keluar.",
+  },
+  {
+    code: "03",
+    label: "Dikirim",
+    note: "Lot menuju alamat UMKM atau siap diambil langsung di gudang pabrik.",
+  },
+  {
+    code: "04",
+    label: "Diterima",
+    note: "Pembeli mengonfirmasi barang tiba, lalu penyelesaian dana diproses.",
+  },
+];
+
+/**
+ * Ledger 4 tahap transaksi bergaya editorial-hairline (selaras dengan tabel UmkmDemo dan DescentBar).
+ * Pengunjung dapat mengetuk tiap tahap untuk membaca apa yang terjadi pada dana dan barang.
+ */
+function OrderLedger() {
+  const [active, setActive] = useState(2);
+  const reduce = !!useSafeReducedMotion();
+  const progress = (active + 1) / ORDER_STAGES.length;
+
   return (
-    <div ref={ref} aria-hidden="true" className="relative mt-2 h-[240px] w-full max-w-[360px]">
-      <svg width="190" height="190" viewBox="0 0 190 190" fill="none" className="absolute left-[30px] top-[30px] rotate-180">
-        <motion.circle
-          cx="95"
-          cy="95"
-          r="94.25"
-          className="stroke-accent"
-          strokeOpacity="0.9"
-          strokeWidth="1.5"
-          {...draw(0.1)}
-        />
-      </svg>
-      <svg
-        width="270"
-        height="270"
-        viewBox="0 0 270 270"
-        fill="none"
-        className="absolute left-[90px] top-[-10px] max-w-none rotate-180"
+    <div className="mt-auto pt-6">
+      <ol
+        aria-label="Tahap perjalanan status pesanan"
+        className="border-y border-on-dark/20 divide-y divide-on-dark/15"
       >
-        <motion.circle
-          cx="135"
-          cy="135"
-          r="134.25"
-          className="stroke-accent"
-          strokeOpacity="0.55"
-          strokeWidth="1.5"
-          {...draw(0.35)}
-        />
-      </svg>
-      {/* Penanda: berputar sekali mengelilingi benang pertama lalu berhenti di titik awal */}
-      <motion.div
-        className="absolute left-[30px] top-[30px] size-[190px]"
-        initial={false}
-        animate={{ rotate: seen && !reduce ? 360 : 0 }}
-        transition={{ duration: 2.4, ease: [0.65, 0, 0.35, 1], delay: 1.2 }}
-      >
-        <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 bg-accent" />
-      </motion.div>
+        {ORDER_STAGES.map((stage, i) => {
+          const isCurrent = i === active;
+          const isPassed = i < active;
+          const stateText = isCurrent ? "Aktif" : isPassed ? "Selesai" : "Berikutnya";
+
+          return (
+            <li key={stage.code}>
+              <button
+                type="button"
+                aria-expanded={isCurrent}
+                aria-current={isCurrent ? "step" : undefined}
+                onClick={() => setActive(i)}
+                className="flex min-h-[44px] w-full items-center justify-between gap-4 py-3 text-left transition-colors duration-150 hover:text-on-dark focus-visible:outline-on-dark"
+              >
+                <span className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className={`size-[6px] shrink-0 transition-colors duration-200 ${
+                      isCurrent
+                        ? "bg-accent"
+                        : isPassed
+                          ? "bg-on-dark/70"
+                          : "border border-on-dark/40 bg-transparent"
+                    }`}
+                  />
+                  <span className="text-[12px] tabular-nums text-on-dark-muted">{stage.code}</span>
+                  <span
+                    className={`text-[15px] leading-5 transition-colors duration-150 ${
+                      isCurrent
+                        ? "font-semibold text-on-dark"
+                        : isPassed
+                          ? "font-medium text-on-dark-soft"
+                          : "font-normal text-on-dark-muted"
+                    }`}
+                  >
+                    {stage.label}
+                  </span>
+                </span>
+                <span
+                  className={`text-[12px] transition-colors duration-150 ${
+                    isCurrent ? "font-medium text-on-dark" : "text-on-dark-muted"
+                  }`}
+                >
+                  {stateText}
+                </span>
+              </button>
+
+              <AnimatePresence initial={false}>
+                {isCurrent && (
+                  <motion.div
+                    key={stage.code}
+                    initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    animate={reduce ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+                    exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: EASE }}
+                    className="overflow-hidden"
+                  >
+                    <p className="pb-3.5 pl-[42px] pr-2 text-[13px] leading-[1.45] text-on-dark-soft">
+                      {stage.note}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="pt-4">
+        <span aria-hidden="true" className="relative block h-[2px] w-full bg-on-dark/20">
+          <motion.span
+            className="absolute inset-0 origin-left bg-accent"
+            initial={false}
+            animate={{ scaleX: progress }}
+            transition={{ duration: reduce ? 0 : 0.28, ease: EASE }}
+          />
+        </span>
+        <div className="mt-2.5 flex items-center justify-between gap-2 text-[12px] text-on-dark-muted">
+          <span>Ketuk tahap untuk melihat rincian</span>
+          <span className="tabular-nums text-on-dark-soft">
+            Tahap {active + 1} dari {ORDER_STAGES.length}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -104,9 +184,9 @@ export default function AsalBahan() {
         Kamu tahu bahannya datang dari mana.
       </h2>
 
-      <div className="mt-10 grid gap-4 md:mt-12 lg:grid-cols-3 lg:items-start">
+      <div className="mt-10 grid gap-4 md:mt-12 lg:grid-cols-3 lg:items-stretch">
         {/* Asal yang jelas */}
-        <article className="flex flex-col gap-3.5 bg-brand-soft p-7 lg:h-[580px]">
+        <article className="flex flex-col gap-3.5 rounded-[2px] bg-brand-soft p-7 lg:min-h-[580px]">
           <h3 className="font-display text-[clamp(26px,2.5vw,34px)] leading-[1.1] tracking-[-0.02em]">
             Asal yang jelas.
           </h3>
@@ -118,14 +198,14 @@ export default function AsalBahan() {
         </article>
 
         {/* Harga yang jelas */}
-        <article className="flex flex-col gap-[18px] lg:h-[580px]">
+        <article className="flex flex-col gap-[18px] lg:min-h-[580px]">
           <div className="relative h-[280px] overflow-hidden rounded-[2px] sm:h-[340px]">
             <motion.div
               className="absolute inset-0"
-              initial={{ scale: 1.1 }}
+              initial={{ scale: 1.06 }}
               whileInView={{ scale: 1 }}
               viewport={{ once: true, margin: "0px 0px -15% 0px" }}
-              transition={{ duration: 1.4, ease: EASE }}
+              transition={{ duration: 1.1, ease: EASE }}
             >
               <Image
                 src="/images/handoff.webp"
@@ -135,6 +215,10 @@ export default function AsalBahan() {
                 className="object-cover"
               />
             </motion.div>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 rounded-[2px] ring-1 ring-inset ring-black/10"
+            />
           </div>
           <h3 className="font-display text-[clamp(26px,2.5vw,34px)] leading-[1.1] tracking-[-0.02em]">
             Harga yang jelas.
@@ -146,14 +230,14 @@ export default function AsalBahan() {
         </article>
 
         {/* Status */}
-        <article className="flex min-h-[440px] flex-col gap-3.5 overflow-hidden bg-brand p-7 text-on-dark lg:h-[580px]">
+        <article className="flex flex-col gap-3.5 rounded-[2px] bg-brand p-7 text-on-dark lg:min-h-[580px]">
           <h3 className="font-display text-[clamp(26px,2.5vw,34px)] leading-[1.1] tracking-[-0.02em]">
             Statusnya selalu terlihat.
           </h3>
           <p className="text-[15px] leading-[22px] text-on-dark-muted">
             Pantau pesananmu dari dipesan sampai bahan tiba. Tim kami yang memperbarui statusnya.
           </p>
-          <Thread />
+          <OrderLedger />
         </article>
       </div>
     </section>

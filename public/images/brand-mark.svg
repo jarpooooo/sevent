@@ -1,6 +1,7 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Tanda merek">
-<rect width="84" height="84" rx="16" fill="#0A4F4B"/>
-<circle id="Ellipse" cx="42" cy="42" r="12.5" stroke-width="7" stroke="white"/>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" width="84" height="84" viewBox="0 0 84 84" fill="none">
+  <rect width="84" height="84" rx="16" fill="#16746A"/>
+  <g transform="translate(13.2, -31.5) scale(1.07)">
+    <path fill="#FFFFFF" d="M 52.8 96 V 67.5 A 26.8 26.8 0 1 0 47.68 83.25 L 39.11 77.02 A 16.2 16.2 0 1 1 42.2 67.5 V 96 Z"/>
+    <path fill="#E8A33D" d="M 37.98 71.39 A 12.6 12.6 0 1 0 29.89 79.48 L 28.04 73.78 A 6.6 6.6 0 1 1 32.28 69.54 Z"/>
+  </g>
 </svg>

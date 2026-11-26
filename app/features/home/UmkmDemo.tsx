@@ -13,7 +13,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 function Counter({
   value,
   format,
-  empty = "—",
+  empty = "-",
 }: {
   value: number | null;
   format: (n: number) => string;
@@ -205,7 +205,7 @@ export default function UmkmDemo() {
               <Counter
                 value={region?.pricePerKg ?? null}
                 format={(n) => `${rupiah(n)} / kg`}
-                empty="Rp — / kg"
+                empty="Rp - / kg"
               />
             </dd>
           </div>
@@ -277,8 +277,8 @@ export default function UmkmDemo() {
                   key={i}
                   className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-on-dark bg-inverse"
                   style={{ left: `${x}%`, top: `${y}%` }}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1, transition: { delay: 0.35 + i * 0.1, ease: EASE, duration: 0.4 } }}
+                  initial={{ scale: 0.75, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1, transition: { delay: 0.25 + i * 0.08, ease: EASE, duration: 0.28 } }}
                 />
               ))}
             </motion.div>

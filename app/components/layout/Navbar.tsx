@@ -1,11 +1,12 @@
 "use client";
 
 import { AnimatePresence, m as motion } from "motion/react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAccount, useRole } from "../../features/auth/session";
+import { KainaraWordmark } from "../brand/KainaraLogo";
+import UserAvatar from "../ui/UserAvatar";
 
 // Menu mengikuti peran. Sebelum login mengikuti UMKM; pabrik mendapat menu kerjanya sendiri.
 const UMKM_LINKS = [
@@ -38,9 +39,8 @@ export default function Navbar() {
         aria-label="Navigasi utama"
         className="mx-auto grid h-[72px] max-w-[1440px] grid-cols-[1fr_auto] items-center px-4 md:px-10 lg:grid-cols-[1fr_auto_1fr]"
       >
-        <Link href="/" className="flex w-fit items-center gap-2.5" aria-label="ClearanceLoop, ke beranda">
-          <Image src="/images/mark.svg" alt="" width={36} height={36} priority />
-          <span className="font-display text-[20px] tracking-[-0.02em]">ClearanceLoop</span>
+        <Link href="/" className="flex w-fit items-center py-1" aria-label="Kainara, ke beranda">
+          <KainaraWordmark className="h-[26px] w-auto" />
         </Link>
 
         <ul className="hidden gap-6 text-[14px] font-medium lg:flex xl:gap-8">
@@ -75,13 +75,16 @@ export default function Navbar() {
               aria-label={`Profil: ${account.name}, ${account.kind}`}
               className="flex items-center gap-2.5 rounded-full py-1 pr-1 lg:pr-3"
             >
-              <span className="flex size-9 items-center justify-center rounded-full bg-brand text-[13px] font-medium text-surface">
-                {account.initials}
-              </span>
+              <UserAvatar
+                photoURL={account.photoURL}
+                initials={account.initials}
+                sizeClass="size-9"
+                textClass="text-[13px]"
+              />
               <span className="hidden whitespace-nowrap text-[13px] font-medium lg:block">{account.chip}</span>
             </Link>
           ) : (
-            <motion.div whileTap={{ scale: 0.97 }}>
+            <motion.div whileTap={{ scale: 0.96 }}>
               <Link
                 href="/masuk"
                 className="block rounded-[2px] bg-brand px-5 py-3 text-[14px] font-medium text-on-dark transition-colors hover:bg-brand-hover"

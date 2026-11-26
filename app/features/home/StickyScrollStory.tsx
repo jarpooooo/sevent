@@ -5,6 +5,7 @@ import { useSafeReducedMotion } from "../../components/motion/useSafeReducedMoti
 import Image from "next/image";
 import Link from "next/link";
 import { gridLines } from "../../components/mosaic/gridLines";
+import { KainaraHeroWordmark } from "../../components/brand/KainaraLogo";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 /**
@@ -209,30 +210,6 @@ function StoryItem({
   );
 }
 
-/* ---------- Huruf wordmark naik dari topeng ---------- */
-
-function Letter({ ch, i, n, intro }: { ch: string; i: number; n: number; intro: MotionValue<number> }) {
-  const a = 0.05 + (i / n) * 0.35;
-  const y = useTransform(intro, [a, a + 0.28], ["108%", "0%"], { ease: (t) => 1 - Math.pow(1 - t, 4) });
-  return (
-    <span className="inline-block overflow-hidden pb-[0.12em] align-bottom">
-      <motion.span className="inline-block" style={{ y }}>
-        {ch}
-      </motion.span>
-    </span>
-  );
-}
-
-function Mark({ intro }: { intro: MotionValue<number> }) {
-  const scale = useTransform(intro, [0, 0.3], [0.5, 1], { ease: (t) => 1 - Math.pow(1 - t, 4) });
-  const opacity = useTransform(intro, [0, 0.15], [0, 1]);
-  return (
-    <motion.span aria-hidden="true" className="inline-flex size-[0.81em]" style={{ scale, opacity }}>
-      <Image src="/images/brand-mark.svg" alt="" width={84} height={84} priority className="size-full" />
-    </motion.span>
-  );
-}
-
 /* ---------- Komponen utama ---------- */
 
 export default function StickyScrollStory({
@@ -276,7 +253,7 @@ export default function StickyScrollStory({
   return (
     <section
       ref={wrapRef}
-      aria-label="Cerita ClearanceLoop"
+      aria-label="Cerita Kainara"
       className="relative"
       style={{ height: `${total * 140}svh` }}
     >
@@ -301,16 +278,8 @@ export default function StickyScrollStory({
         {/* Konten: intro, cerita, penutup */}
         <div className="absolute inset-x-0 bottom-0 top-[72px]">
           <StoryItem index={0} total={total} progress={scrollYProgress}>
-            <h1
-              aria-label={introTitle}
-              className="font-display flex items-center gap-[0.23em] whitespace-nowrap text-[clamp(34px,8.5vw,104px)] leading-none tracking-[-0.04em]"
-            >
-              <Mark intro={intro} />
-              <span aria-hidden="true">
-                {introTitle.split("").map((ch, i) => (
-                  <Letter key={i} ch={ch} i={i} n={introTitle.length} intro={intro} />
-                ))}
-              </span>
+            <h1 aria-label={introTitle} className="flex items-center justify-center">
+              <KainaraHeroWordmark intro={intro} />
             </h1>
           </StoryItem>
 
