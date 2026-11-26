@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { m as motion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { useSafeReducedMotion } from "./useSafeReducedMotion";
 import Image from "next/image";
 import { useRef } from "react";
@@ -13,17 +13,17 @@ const TOKENS: Token[] = [
   { word: "sisa" },
   { word: "produksi" },
   { word: "dari" },
-  { chip: "/images/chip-1.png" },
+  { chip: "/images/chip-1.webp" },
   { word: "pabrik," },
   { word: "menjualnya" },
   { word: "ke" },
-  { chip: "/images/chip-2.png" },
+  { chip: "/images/chip-2.webp" },
   { word: "penjahit" },
   { word: "terverifikasi" },
   { word: "dan" },
   { word: "menjaga" },
   { word: "catatannya" },
-  { chip: "/images/chip-3.png" },
+  { chip: "/images/chip-3.webp" },
   { word: "sampai" },
   { word: "tuntas." },
 ];
@@ -73,7 +73,7 @@ function Chip({
     >
       <Image src={src} alt="" fill sizes="120px" className="object-cover" />
       <motion.span
-        className="absolute inset-0 bg-bg"
+        className="absolute inset-0 bg-surface"
         style={reduce ? { opacity: cover } : { scaleX: cover, transformOrigin: "100% 50%" }}
       />
     </span>

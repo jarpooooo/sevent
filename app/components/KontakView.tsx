@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m as motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import MosaicCover from "./MosaicCover";
@@ -19,16 +19,16 @@ const KEEPS = [
 ];
 
 const field =
-  "h-12 w-full rounded-[12px] bg-white px-3.5 text-[16px] outline-none placeholder:text-muted focus:ring-2 focus:ring-teal";
+  "h-12 w-full rounded-[12px] bg-card px-3.5 text-[16px] outline-none placeholder:text-text-muted focus:ring-2 focus:ring-brand";
 
 export default function KontakView() {
   const [role, setRole] = useState<(typeof ROLES)[number]>("UMKM penjahit");
   const [sent, setSent] = useState(false);
 
   return (
-    <section aria-label="Kontak" className="relative bg-bg pt-[72px] md:min-h-svh">
-      <div aria-hidden="true" className="absolute inset-0 hidden bg-ink md:block">
-        <Image src="/images/kontak.png" alt="" fill priority sizes="100vw" className="object-cover" />
+    <section aria-label="Kontak" className="relative bg-surface pt-[72px] md:min-h-svh">
+      <div aria-hidden="true" className="absolute inset-0 hidden bg-inverse md:block">
+        <Image src="/images/kontak.webp" alt="" fill priority sizes="100vw" className="object-cover" />
         <MosaicCover
           cols={12}
           rows={8}
@@ -64,14 +64,14 @@ export default function KontakView() {
               </motion.span>
             </span>
           </h1>
-          <p className="mt-6 max-w-[430px] text-[18px] leading-7 text-muted">
+          <p className="mt-6 max-w-[430px] text-[18px] leading-7 text-text-muted">
             Penjahit yang cari bahan, atau pabrik yang punya sisa produksi: tulis saja. Kami balas lewat
             WhatsApp atau email.
           </p>
           <dl className="mt-10 flex flex-col gap-[18px] md:mt-[88px]">
             {INFO.map((i) => (
               <div key={i.k}>
-                <dt className="text-[13px] font-medium text-muted">{i.k}</dt>
+                <dt className="text-[13px] font-medium text-text-muted">{i.k}</dt>
                 <dd className="font-display text-[clamp(19px,1.8vw,23px)] tracking-[-0.02em]">{i.v}</dd>
               </div>
             ))}
@@ -79,7 +79,7 @@ export default function KontakView() {
         </div>
 
         <form
-          className="flex flex-col gap-[18px] rounded-[24px] bg-pale p-6 sm:p-8"
+          className="flex flex-col gap-[18px] rounded-[24px] bg-brand-soft p-6 sm:p-8"
           onSubmit={(e) => {
             e.preventDefault();
             setSent(true);
@@ -110,13 +110,13 @@ export default function KontakView() {
                   aria-pressed={role === r}
                   onClick={() => setRole(r)}
                   className={`relative rounded-full px-4 py-2.5 text-[15px] font-medium transition-colors duration-300 ${
-                    role === r ? "text-white" : "bg-white text-ink hover:bg-white/70"
+                    role === r ? "text-on-dark" : "bg-card text-text hover:bg-card/70"
                   }`}
                 >
                   {role === r && (
                     <motion.span
                       layoutId="kontak-peran"
-                      className="absolute inset-0 rounded-full bg-teal"
+                      className="absolute inset-0 rounded-full bg-brand"
                       transition={{ type: "spring", stiffness: 420, damping: 34 }}
                     />
                   )}
@@ -134,18 +134,18 @@ export default function KontakView() {
               id="k-pesan"
               rows={4}
               placeholder="Ceritakan kebutuhan atau stokmu"
-              className="w-full resize-none rounded-[12px] bg-white p-3.5 text-[16px] outline-none placeholder:text-muted focus:ring-2 focus:ring-teal"
+              className="w-full resize-none rounded-[12px] bg-card p-3.5 text-[16px] outline-none placeholder:text-text-muted focus:ring-2 focus:ring-brand"
             />
           </div>
 
           <motion.button
             type="submit"
             whileTap={{ scale: 0.97 }}
-            className="w-fit rounded-full bg-teal px-7 py-3.5 text-[16px] font-medium text-white transition-colors hover:bg-[#083f3c]"
+            className="w-fit rounded-full bg-brand px-7 py-3.5 text-[16px] font-medium text-on-dark transition-colors hover:bg-brand-hover"
           >
             Kirim pesan
           </motion.button>
-          <p role="status" className="min-h-5 text-[14px] text-muted">
+          <p role="status" className="min-h-5 text-[14px] text-text-muted">
             <AnimatePresence mode="wait">
               {sent && (
                 <motion.span

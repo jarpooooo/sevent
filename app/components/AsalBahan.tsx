@@ -1,11 +1,12 @@
 "use client";
 
-import { motion, useInView } from "motion/react";
+import { m as motion, useInView } from "motion/react";
 import { useSafeReducedMotion } from "./useSafeReducedMotion";
 import Image from "next/image";
 import { useRef } from "react";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE_CSS = "cubic-bezier(0.16, 1, 0.3, 1)";
 const COLS = 9;
 const ROWS = 6;
 
@@ -25,12 +26,14 @@ function StockDots() {
         const r = Math.floor(i / COLS);
         const c = i % COLS;
         return (
-          <motion.span
+          <span
             key={i}
-            className="size-[6px] rounded-full bg-[#8fb9b4]"
-            initial={false}
-            animate={reduce ? { opacity: seen ? 1 : 0 } : { scale: seen ? 1 : 0, opacity: seen ? 1 : 0 }}
-            transition={{ duration: 0.5, ease: EASE, delay: seen ? 0.1 + (r + c) * 0.045 : 0 }}
+            className="size-[6px] rounded-full bg-dot-stock"
+            style={{
+              opacity: seen ? 1 : 0,
+              transform: reduce ? undefined : `scale(${seen ? 1 : 0})`,
+              transition: `opacity 0.5s ${EASE_CSS} ${seen ? 0.1 + (r + c) * 0.045 : 0}s, transform 0.5s ${EASE_CSS} ${seen ? 0.1 + (r + c) * 0.045 : 0}s`,
+            }}
           />
         );
       })}
@@ -55,7 +58,7 @@ function Thread() {
           cx="95"
           cy="95"
           r="94.25"
-          stroke="#E8A33D"
+          className="stroke-accent"
           strokeOpacity="0.9"
           strokeWidth="1.5"
           {...draw(0.1)}
@@ -72,7 +75,7 @@ function Thread() {
           cx="135"
           cy="135"
           r="134.25"
-          stroke="#E8A33D"
+          className="stroke-accent"
           strokeOpacity="0.55"
           strokeWidth="1.5"
           {...draw(0.35)}
@@ -85,7 +88,7 @@ function Thread() {
         animate={{ rotate: seen && !reduce ? 360 : 0 }}
         transition={{ duration: 2.4, ease: [0.65, 0, 0.35, 1], delay: 1.2 }}
       >
-        <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 bg-ochre" />
+        <span className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 bg-accent" />
       </motion.div>
     </div>
   );
@@ -103,11 +106,11 @@ export default function AsalBahan() {
 
       <div className="mt-10 grid gap-4 md:mt-12 lg:grid-cols-3 lg:items-start">
         {/* Asal yang jelas */}
-        <article className="flex flex-col gap-3.5 bg-pale p-7 lg:h-[580px]">
+        <article className="flex flex-col gap-3.5 bg-brand-soft p-7 lg:h-[580px]">
           <h3 className="font-display text-[clamp(26px,2.5vw,34px)] leading-[1.1] tracking-[-0.02em]">
             Asal yang jelas.
           </h3>
-          <p className="text-[15px] leading-[22px] text-muted">
+          <p className="text-[15px] leading-[22px] text-text-muted">
             Setiap lot mencantumkan pabrik asal dan daerahnya, jadi sumber bahan terlihat sebelum kamu
             membeli.
           </p>
@@ -125,7 +128,7 @@ export default function AsalBahan() {
               transition={{ duration: 1.4, ease: EASE }}
             >
               <Image
-                src="/images/handoff.png"
+                src="/images/handoff.webp"
                 alt="Serah terima kain denim antara dua orang"
                 fill
                 sizes="(min-width: 1024px) 450px, 100vw"
@@ -136,18 +139,18 @@ export default function AsalBahan() {
           <h3 className="font-display text-[clamp(26px,2.5vw,34px)] leading-[1.1] tracking-[-0.02em]">
             Harga yang jelas.
           </h3>
-          <p className="text-[15px] leading-[22px] text-muted">
+          <p className="text-[15px] leading-[22px] text-text-muted">
             Harga tetap atau harga lelang terlihat sebelum membeli, lengkap dengan total sampai
             tempatmu.
           </p>
         </article>
 
         {/* Status */}
-        <article className="flex min-h-[440px] flex-col gap-3.5 overflow-hidden bg-teal p-7 text-white lg:h-[580px]">
+        <article className="flex min-h-[440px] flex-col gap-3.5 overflow-hidden bg-brand p-7 text-on-dark lg:h-[580px]">
           <h3 className="font-display text-[clamp(26px,2.5vw,34px)] leading-[1.1] tracking-[-0.02em]">
             Statusnya selalu terlihat.
           </h3>
-          <p className="text-[15px] leading-[22px] text-[#cfe3e1]">
+          <p className="text-[15px] leading-[22px] text-on-dark-muted">
             Pantau pesananmu dari dipesan sampai bahan tiba. Tim kami yang memperbarui statusnya.
           </p>
           <Thread />

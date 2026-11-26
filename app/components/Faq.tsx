@@ -1,10 +1,11 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m as motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import MosaicCover from "./MosaicCover";
+import MosaicLoop from "./MosaicLoop";
+import { Icon } from "./icons";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -36,8 +37,6 @@ const ITEMS = [
 ];
 
 // Mosaik penutup foto gudang: [baris, kolom] tile yang tertutup (12 kolom x 2 baris)
-const CLOSED = new Set(["0-1", "0-2", "0-4", "0-5", "1-0", "1-3", "1-5", "1-7", "1-8", "1-10", "1-11"]);
-
 export default function Faq() {
   const [open, setOpen] = useState(0);
 
@@ -52,22 +51,22 @@ export default function Faq() {
           <h2 className="font-display text-[clamp(36px,4.9vw,56px)] leading-[1.06] tracking-[-0.03em]">
             Pertanyaan yang sering muncul.
           </h2>
-          <p className="mt-5 max-w-[380px] text-[18px] leading-7 text-muted">
+          <p className="mt-5 max-w-[380px] text-[18px] leading-7 text-text-muted">
             Belum ketemu jawabannya? Tulis ke kami lewat halaman Kontak.
           </p>
           <Link
             href="/kontak"
-            className="mt-5 inline-block rounded-full bg-teal px-6 py-3 text-[16px] font-medium text-white transition-colors hover:bg-[#083f3c]"
+            className="mt-5 inline-block rounded-full bg-brand px-6 py-3 text-[16px] font-medium text-on-dark transition-colors hover:bg-brand-hover"
           >
             Buka Kontak
           </Link>
         </div>
 
-        <div className="min-w-0 flex-1 border-t border-[var(--line)]">
+        <div className="min-w-0 flex-1 border-t border-border">
           {ITEMS.map((it, i) => {
             const isOpen = open === i;
             return (
-              <div key={it.q} className="border-b border-[var(--line)]">
+              <div key={it.q} className="border-b border-border">
                 <h3>
                   <button
                     type="button"
@@ -81,16 +80,14 @@ export default function Faq() {
                     </span>
                     <motion.span
                       aria-hidden="true"
-                      className="font-display flex size-9 shrink-0 items-center justify-center rounded-full text-[22px]"
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
+                        isOpen ? "bg-brand text-on-dark" : "bg-brand-soft text-text"
+                      }`}
                       initial={false}
-                      animate={{
-                        backgroundColor: isOpen ? "#0a4f4b" : "#dcebea",
-                        color: isOpen ? "#ffffff" : "#0b0f0c",
-                        rotate: isOpen ? 180 : 0,
-                      }}
+                      animate={{ rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.4, ease: EASE }}
                     >
-                      {isOpen ? "−" : "+"}
+                      <Icon name={isOpen ? "minus" : "plus"} size={18} />
                     </motion.span>
                   </button>
                 </h3>
@@ -106,7 +103,7 @@ export default function Faq() {
                       transition={{ duration: 0.45, ease: EASE }}
                       className="overflow-hidden"
                     >
-                      <p className="max-w-[640px] pb-[26px] text-[clamp(16px,1.4vw,18px)] leading-7 text-muted">
+                      <p className="max-w-[640px] pb-[26px] text-[clamp(16px,1.4vw,18px)] leading-7 text-text-muted">
                         {it.a}
                       </p>
                     </motion.div>
@@ -118,31 +115,17 @@ export default function Faq() {
         </div>
       </div>
 
-      {/* Strip foto gudang + mosaik */}
-      <div aria-hidden="true" className="relative h-[130px] overflow-hidden bg-ink sm:h-[180px] lg:h-[225px]">
+      {/* Strip foto gudang + mosaik yang menutup dan membuka pelan, tanpa henti */}
+      <div aria-hidden="true" className="relative h-[130px] overflow-hidden bg-inverse sm:h-[180px] lg:h-[225px]">
         <Image
-          src="/images/gudang.png"
+          src="/images/gudang.webp"
           alt=""
           fill
           sizes="(min-width: 1440px) 1360px, 100vw"
           className="object-cover"
         />
-        <MosaicCover
-          cols={12}
-          rows={2}
-          closedFn={(r, c) => CLOSED.has(`${r}-${c}`)}
-          origin={{ x: 0, y: 0.5 }}
-          trigger="inView"
-          className="absolute inset-0 hidden sm:block"
-        />
-        <MosaicCover
-          cols={6}
-          rows={2}
-          closedFn={(r, c) => CLOSED.has(`${r}-${c}`)}
-          origin={{ x: 0, y: 0.5 }}
-          trigger="inView"
-          className="absolute inset-0 sm:hidden"
-        />
+        <MosaicLoop cols={12} rows={2} seed={21} line={1} className="absolute inset-0 hidden sm:block" />
+        <MosaicLoop cols={6} rows={2} seed={22} line={1} className="absolute inset-0 sm:hidden" />
       </div>
     </section>
   );

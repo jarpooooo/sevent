@@ -1,9 +1,19 @@
 "use client";
 
-import { MotionConfig } from "motion/react";
+import { LazyMotion, MotionConfig } from "motion/react";
 import type { ReactNode } from "react";
+import SmoothScroll from "./SmoothScroll";
 
-/** Satu pengaturan untuk semua animasi: ikuti prefers-reduced-motion milik pengunjung. */
+// Fitur animasi (layout, gesture) dimuat belakangan, bukan di bundle awal.
+const loadFeatures = () => import("./motionFeatures").then((m) => m.default);
+
+/** Satu pengaturan untuk semua animasi dan scroll: ikuti prefers-reduced-motion pengunjung. */
 export default function MotionProvider({ children }: { children: ReactNode }) {
-  return <MotionConfig reducedMotion="user">{children}</MotionConfig>;
+  return (
+    <LazyMotion features={loadFeatures} strict>
+      <MotionConfig reducedMotion="user">
+        <SmoothScroll>{children}</SmoothScroll>
+      </MotionConfig>
+    </LazyMotion>
+  );
 }

@@ -1,39 +1,85 @@
 @import "tailwindcss";
 
-/* Sistem desain ClearanceLoop (dari Figma) */
-:root {
-  --bg: #eef1ea;
-  --ink: #0b0f0c;
-  --muted: #5b655e;
-  --teal: #0a4f4b;
-  --pale: #dcebea;
-  --ochre: #e8a33d;
-  --line: rgba(11, 15, 12, 0.14);
-  --nav-h: 72px;
-}
+/*
+ * Token warna ClearanceLoop, dua lapis:
+ *  1. --color-palette-*  : warna mentah dari Figma. Hanya dirujuk oleh lapis 2.
+ *  2. token semantik      : dipakai komponen lewat utilitas (bg-surface, text-text, bg-brand, ...).
+ * Komponen tidak boleh memakai hex atau rgba mentah; ganti peran di sini, bukan di komponen.
+ */
+@theme {
+  /* Lapis 1: palet mentah */
+  --color-palette-bg: #eef1ea;
+  --color-palette-ink: #0b0f0c;
+  --color-palette-teal: #0a4f4b;
+  --color-palette-teal-dark: #083f3c;
+  --color-palette-pale: #dcebea;
+  --color-palette-ochre: #e8a33d;
+  --color-palette-white: #ffffff;
 
-@theme inline {
-  --color-bg: var(--bg);
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-teal: var(--teal);
-  --color-pale: var(--pale);
-  --color-ochre: var(--ochre);
+  /* Lapis 2: permukaan */
+  --color-surface: var(--color-palette-bg); /* latar halaman, tile penutup mosaik */
+  --color-card: var(--color-palette-white); /* kartu, input, tombol terang */
+  --color-panel: #f8faf6; /* kartu lot dan panel beli di katalog */
+  --color-line: #cfd7cf; /* garis pemisah di halaman katalog */
+  --color-thumb-empty: #c9d2cd; /* thumbnail galeri yang belum ada foto */
+  --color-warn-soft: #f6e3be; /* status menunggu tindakan */
+  --color-inverse: var(--color-palette-ink); /* permukaan gelap di bawah foto */
+  --color-brand: var(--color-palette-teal); /* tombol utama, penanda aktif */
+  --color-brand-hover: var(--color-palette-teal-dark);
+  --color-brand-soft: var(--color-palette-pale); /* panel lembut, pil nonaktif */
+  --color-accent: var(--color-palette-ochre); /* status, penanda, langkah akhir */
+  --color-scrim: rgb(11 15 12 / 0.62); /* peredam di atas foto */
+  --color-glass: rgb(94 123 126 / 0.78); /* panel kaca CTA */
+  --color-glass-field: rgb(255 255 255 / 0.28); /* input di atas panel kaca */
+  --color-glass-field-focus: rgb(255 255 255 / 0.4);
+
+  /* Lapis 2: teks */
+  --color-text: var(--color-palette-ink);
+  --color-text-muted: #5b655e; /* kontras 5.2:1 di atas surface */
+  --color-text-soft: #4a544d; /* isi kartu putih */
+  --color-text-faint: #7c877f; /* dekoratif besar saja (strip bahan) */
+  --color-text-placeholder: #5f6a63;
+  --color-on-dark: var(--color-palette-white); /* teks di atas foto atau brand */
+  --color-on-dark-soft: #e6f0ee;
+  --color-on-dark-muted: #cfe3e1;
+
+  /* Lapis 2: garis dan tanda */
+  --color-border: rgb(11 15 12 / 0.14);
+  --color-border-strong: rgb(11 15 12 / 0.2);
+  --color-divider: rgb(11 15 12 / 0.25);
+  --color-mark-muted: #b7c0b8; /* belah ketupat pemisah */
+  --color-dot-stock: #8fb9b4; /* titik stok */
+  --color-dot-idle: #c9d0ca; /* indikator cerita belum aktif */
+  --color-focus: var(--color-brand);
+
   --font-display: var(--font-archivo), "Archivo", system-ui, sans-serif;
   --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
 }
 
+:root {
+  --nav-h: 72px;
+}
+
 html {
-  background: var(--bg);
-  scroll-behavior: smooth;
+  background: var(--color-surface);
+  scroll-behavior: auto;
+  /* Browser surfaces: scrollbar, kontrol form, caret ikut palet */
+  scrollbar-color: var(--color-mark-muted) var(--color-surface);
+  accent-color: var(--color-brand);
 }
 
 body {
-  background: var(--bg);
-  color: var(--ink);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
+  caret-color: var(--color-brand);
+}
+
+::selection {
+  background: var(--color-brand);
+  color: var(--color-on-dark);
 }
 
 .font-display {
@@ -43,8 +89,23 @@ body {
 
 /* Fokus terlihat untuk keyboard */
 :focus-visible {
-  outline: 2px solid var(--teal);
+  outline: 2px solid var(--color-focus);
   outline-offset: 3px;
+}
+
+/* Lenis: biarkan Lenis yang mengatur scroll halus */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 /* Slider demo UMKM: track tipis + knob bulat */
@@ -58,11 +119,11 @@ body {
 }
 .range-demo::-webkit-slider-runnable-track {
   height: 1px;
-  background: rgba(11, 15, 12, 0.3);
+  background: var(--color-divider);
 }
 .range-demo::-moz-range-track {
   height: 1px;
-  background: rgba(11, 15, 12, 0.3);
+  background: var(--color-divider);
 }
 .range-demo::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -71,25 +132,60 @@ body {
   height: 18px;
   margin-top: -9px;
   border-radius: 999px;
-  background: #fff;
-  border: 1.5px solid var(--ink);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text);
 }
 .range-demo::-moz-range-thumb {
   width: 15px;
   height: 15px;
   border-radius: 999px;
-  background: #fff;
-  border: 1.5px solid var(--ink);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+/* Hitung mundur tahap pembeli: garis ochre mengisi dari kiri, tahap pindah saat penuh */
+@keyframes stage-countdown {
+  from {
+    transform: scaleX(0);
   }
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
+  to {
+    transform: scaleX(1);
   }
+}
+.stage-countdown {
+  animation-name: stage-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+/*
+ * Mosaik bergerak: tiap tile menutup lalu membuka lagi pelan, berulang. Murni transform (compositor).
+ * Tile mulai dalam keadaan terbuka (scale 0), menutup sebentar, lalu membuka. Varian a lebih sering
+ * tertutup, varian b jarang, jadi pola foto selalu berubah tapi foto tetap kelihatan.
+ * Durasi, jeda negatif, dan sisi tutup diatur per tile dari komponen MosaicLoop.
+ */
+@keyframes tile-xa {
+  0%, 30% { transform: scaleX(0); }
+  52%, 74% { transform: scaleX(1); }
+  96%, 100% { transform: scaleX(0); }
+}
+@keyframes tile-xb {
+  0%, 58% { transform: scaleX(0); }
+  74%, 82% { transform: scaleX(1); }
+  98%, 100% { transform: scaleX(0); }
+}
+@keyframes tile-ya {
+  0%, 30% { transform: scaleY(0); }
+  52%, 74% { transform: scaleY(1); }
+  96%, 100% { transform: scaleY(0); }
+}
+@keyframes tile-yb {
+  0%, 58% { transform: scaleY(0); }
+  74%, 82% { transform: scaleY(1); }
+  98%, 100% { transform: scaleY(0); }
+}
+.tile-loop {
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  animation-play-state: var(--tile-play, running);
 }

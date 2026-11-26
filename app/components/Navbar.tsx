@@ -1,14 +1,25 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m as motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { ACCOUNTS, useRole } from "./auth/session";
 
-const LINKS = [
+// Menu mengikuti peran. Sebelum login mengikuti UMKM; pabrik mendapat menu kerjanya sendiri.
+const UMKM_LINKS = [
   { href: "/", label: "Beranda" },
+  { href: "/katalog", label: "Katalog" },
+  { href: "/pesanan-saya", label: "Pesanan saya" },
   { href: "/alur-kerja", label: "Alur kerja" },
+  { href: "/kontak", label: "Kontak" },
+];
+const PABRIK_LINKS = [
+  { href: "/", label: "Beranda" },
+  { href: "/lot-saya", label: "Lot saya" },
+  { href: "/pesanan-masuk", label: "Pesanan masuk" },
+  { href: "/pencairan-dana", label: "Pencairan dana" },
   { href: "/kontak", label: "Kontak" },
 ];
 
@@ -17,21 +28,25 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const role = useRole();
+  const links = role === "pabrik" ? PABRIK_LINKS : UMKM_LINKS;
+  const account = role ? ACCOUNTS[role] : null;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-bg">
+    <header className="fixed inset-x-0 top-0 z-50 bg-surface">
       <nav
         aria-label="Navigasi utama"
-        className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-4 md:px-10"
+        className="mx-auto grid h-[72px] max-w-[1440px] grid-cols-[1fr_auto] items-center px-4 md:px-10 lg:grid-cols-[1fr_auto_1fr]"
       >
-        <Link href="/" className="flex items-center gap-2.5" aria-label="ClearanceLoop, ke beranda">
+        <Link href="/" className="flex w-fit items-center gap-2.5" aria-label="ClearanceLoop, ke beranda">
           <Image src="/images/mark.svg" alt="" width={36} height={36} priority />
           <span className="font-display text-[20px] tracking-[-0.02em]">ClearanceLoop</span>
         </Link>
 
-        <ul className="absolute left-1/2 hidden -translate-x-1/2 gap-8 text-[14px] font-medium md:flex">
-          {LINKS.map((l) => {
-            const current = pathname === l.href;
+        <ul className="hidden gap-6 text-[14px] font-medium lg:flex xl:gap-8">
+          {links.map((l) => {
+            // Halaman detail lot (/katalog/xxx) tetap menandai "Katalog" sebagai menu aktif
+            const current = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
             return (
               <li key={l.href}>
                 <Link
@@ -43,7 +58,7 @@ export default function Navbar() {
                   {current && (
                     <motion.span
                       layoutId="nav-underline"
-                      className="absolute inset-x-0 -bottom-0.5 h-[2px] bg-teal"
+                      className="absolute inset-x-0 -bottom-0.5 h-[2px] bg-brand"
                       transition={{ type: "spring", stiffness: 380, damping: 34 }}
                     />
                   )}
@@ -53,31 +68,44 @@ export default function Navbar() {
           })}
         </ul>
 
-        <div className="flex items-center gap-2">
-          <motion.div whileTap={{ scale: 0.97 }} className="hidden sm:block">
+        <div className="flex items-center justify-end gap-2">
+          {account ? (
             <Link
-              href="/kontak"
-              className="block rounded-[2px] bg-teal px-5 py-3 text-[14px] font-medium text-white transition-colors hover:bg-[#083f3c]"
+              href="/profil"
+              aria-label={`Profil: ${account.name}, ${account.kind}`}
+              className="flex items-center gap-2.5 rounded-full py-1 pr-1 lg:pr-3"
             >
-              Bicara dengan kami
+              <span className="flex size-9 items-center justify-center rounded-full bg-brand text-[13px] font-medium text-surface">
+                {account.initials}
+              </span>
+              <span className="hidden whitespace-nowrap text-[13px] font-medium lg:block">{account.chip}</span>
             </Link>
-          </motion.div>
+          ) : (
+            <motion.div whileTap={{ scale: 0.97 }}>
+              <Link
+                href="/masuk"
+                className="block rounded-[2px] bg-brand px-5 py-3 text-[14px] font-medium text-on-dark transition-colors hover:bg-brand-hover"
+              >
+                Masuk
+              </Link>
+            </motion.div>
+          )}
           <button
             type="button"
             aria-label={open ? "Tutup menu" : "Buka menu"}
             aria-expanded={open}
             aria-controls="menu-mobile"
             onClick={() => setOpen((v) => !v)}
-            className="relative size-11 rounded-[2px] bg-teal md:hidden"
+            className="relative size-11 rounded-[2px] bg-brand lg:hidden"
           >
             <motion.span
-              className="absolute left-[13px] top-[21px] h-[2px] w-[18px] bg-white"
+              className="absolute left-[13px] top-[21px] h-[2px] w-[18px] bg-card"
               initial={false}
               animate={{ y: open ? 0 : -5, rotate: open ? 45 : 0 }}
               transition={{ duration: 0.3, ease: EASE }}
             />
             <motion.span
-              className="absolute left-[13px] top-[21px] h-[2px] w-[18px] bg-white"
+              className="absolute left-[13px] top-[21px] h-[2px] w-[18px] bg-card"
               initial={false}
               animate={{ y: open ? 0 : 5, rotate: open ? -45 : 0 }}
               transition={{ duration: 0.3, ease: EASE }}
@@ -95,11 +123,11 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0, transition: { duration: 0.2 } }}
             transition={{ duration: 0.35, ease: EASE }}
-            className="overflow-hidden border-t border-[var(--line)] bg-bg md:hidden"
+            className="overflow-hidden border-t border-border bg-surface lg:hidden"
           >
             <div className="px-4 pb-5 pt-3">
               <ul className="flex flex-col text-[18px]">
-                {LINKS.map((l, i) => (
+                {links.map((l, i) => (
                   <motion.li
                     key={l.href}
                     initial={{ opacity: 0, y: 8 }}
@@ -109,20 +137,13 @@ export default function Navbar() {
                     <Link
                       href={l.href}
                       onClick={() => setOpen(false)}
-                      className="font-display block border-b border-[var(--line)] py-3"
+                      className="font-display block border-b border-border py-3"
                     >
                       {l.label}
                     </Link>
                   </motion.li>
                 ))}
               </ul>
-              <Link
-                href="/kontak"
-                onClick={() => setOpen(false)}
-                className="mt-4 block rounded-[2px] bg-teal px-5 py-3 text-center text-[14px] font-medium text-white sm:hidden"
-              >
-                Bicara dengan kami
-              </Link>
             </div>
           </motion.div>
         )}

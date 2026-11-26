@@ -1,11 +1,15 @@
-import AsalBahan from "../components/AsalBahan";
-import CtaFooter from "../components/CtaFooter";
-import Faq from "../components/Faq";
+import dynamic from "next/dynamic";
 import MaterialStrip from "../components/MaterialStrip";
-import Pernyataan from "../components/Pernyataan";
-import StageSteps from "../components/StageSteps";
 import StickyScrollStory from "../components/StickyScrollStory";
-import UmkmDemo from "../components/UmkmDemo";
+
+// Bagian di bawah layar pertama dipecah jadi chunk sendiri. HTML-nya tetap dirender server,
+// tetapi hidrasinya berlangsung per bagian (bukan satu tugas panjang) dan bundle awal lebih kecil.
+const Pernyataan = dynamic(() => import("../components/Pernyataan"));
+const StageSteps = dynamic(() => import("../components/StageSteps"));
+const UmkmDemo = dynamic(() => import("../components/UmkmDemo"));
+const AsalBahan = dynamic(() => import("../components/AsalBahan"));
+const Faq = dynamic(() => import("../components/Faq"));
+const CtaFooter = dynamic(() => import("../components/CtaFooter"));
 
 const STORY = [
   "Sisa produksi pabrik terlalu sering berakhir di pengepul dengan harga murah.",
@@ -21,7 +25,7 @@ export default function Home() {
         <StickyScrollStory
           texts={STORY}
           introTitle="ClearanceLoop"
-          image="/images/hero.png"
+          image="/images/hero.webp"
           finale={{
             title: ["Bahan yang adil.", "Jahitan yang jalan."],
             body: "Pasar B2B untuk sisa tekstil. Pabrik menjual langsung ke UMKM yang sudah kami verifikasi.",

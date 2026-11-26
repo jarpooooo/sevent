@@ -1,16 +1,11 @@
 "use client";
 
-import {
-  AnimatePresence,
-  animate,
-  motion,
-  useMotionValue,
-  useTransform,
-} from "motion/react";
+import { AnimatePresence, animate, m as motion, useMotionValue, useTransform } from "motion/react";
 import { useSafeReducedMotion } from "./useSafeReducedMotion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Icon } from "./icons";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -93,25 +88,22 @@ export default function UmkmDemo() {
         <h2 className="font-display text-[clamp(38px,5vw,56px)] leading-[1.04] tracking-[-0.03em]">
           Jahitanmu tetap jalan.
         </h2>
-        <p className="mt-6 text-[16px] leading-6 text-muted">
+        <p className="mt-6 text-[16px] leading-6 text-text-muted">
           Ketik daerahmu dan geser kebutuhan kainmu. Biaya dihitung dari harga tetap regional. Demo ini
           belum membuat transaksi.
         </p>
 
         {/* Wilayah */}
         <div ref={wrapRef} className="relative mt-7 w-full max-w-[280px]">
-          <label htmlFor={`${listId}-in`} className="text-[14px] text-muted">
+          <label htmlFor={`${listId}-in`} className="text-[14px] text-text-muted">
             Daerahmu (kabupaten/kota)
           </label>
           <div
-            className={`mt-2 flex h-10 items-center gap-2 rounded-[10px] bg-white/75 px-3 ${
-              focused ? "border-[1.5px] border-teal" : "border border-[rgba(11,15,12,0.2)]"
+            className={`mt-2 flex h-10 items-center gap-2 rounded-[10px] bg-card/75 px-3 ${
+              focused ? "border-[1.5px] border-brand" : "border border-border-strong"
             }`}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-muted">
-              <circle cx="6.5" cy="6.5" r="4.75" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M10 10l4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <Icon name="search" size={16} className="shrink-0 text-text-muted" />
             <input
               id={`${listId}-in`}
               role="combobox"
@@ -127,10 +119,10 @@ export default function UmkmDemo() {
               onBlur={(e) => {
                 if (!wrapRef.current?.contains(e.relatedTarget as Node)) setFocused(false);
               }}
-              className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#8a948d]"
+              className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-text-placeholder"
             />
             {region && (
-              <button type="button" onClick={reset} className="text-[13px] text-muted hover:text-ink">
+              <button type="button" onClick={reset} className="text-[13px] text-text-muted hover:text-text">
                 Ganti
               </button>
             )}
@@ -145,7 +137,7 @@ export default function UmkmDemo() {
               animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.22, ease: EASE } }}
               exit={{ opacity: 0, y: -4, transition: { duration: 0.12 } }}
               style={{ transformOrigin: "50% 0%" }}
-              className="absolute left-0 top-[72px] z-10 w-full rounded-[12px] border border-[var(--line)] bg-white p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+              className="absolute left-0 top-[72px] z-10 w-full rounded-[12px] border border-border bg-card p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
             >
               {matches.map((r, i) => (
                 <li key={r.name} role="option" aria-selected={false} aria-disabled={!r.open}>
@@ -155,7 +147,7 @@ export default function UmkmDemo() {
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => pick(r)}
                     className={`flex h-[34px] w-full items-center justify-between rounded-[7px] px-2.5 text-left text-[14px] ${
-                      r.open ? (i === 0 ? "bg-pale" : "hover:bg-pale") : "cursor-not-allowed text-[#8a948d]"
+                      r.open ? (i === 0 ? "bg-brand-soft" : "hover:bg-brand-soft") : "cursor-not-allowed text-text-placeholder"
                     }`}
                   >
                     <span>{r.name}</span>
@@ -171,7 +163,7 @@ export default function UmkmDemo() {
         {/* Slider */}
         <div className="mt-7">
           <div className="flex justify-between text-[14px]">
-            <label htmlFor={`${listId}-kg`} className="text-muted">
+            <label htmlFor={`${listId}-kg`} className="text-text-muted">
               Kebutuhan kain per bulan
             </label>
             <output htmlFor={`${listId}-kg`} className="font-medium">
@@ -181,7 +173,7 @@ export default function UmkmDemo() {
           <div className="relative mt-3">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-0 top-[9.25px] h-[1.5px] bg-ink"
+              className="pointer-events-none absolute left-0 top-[9.25px] h-[1.5px] bg-inverse"
               style={{ width: `${pct}%` }}
             />
             <input
@@ -198,9 +190,9 @@ export default function UmkmDemo() {
         </div>
 
         {/* Tabel */}
-        <dl className="mt-7 border-y border-[var(--line)] [&>div]:flex [&>div]:items-center [&>div]:justify-between [&>div]:gap-4 [&>div]:py-4 [&>div+div]:border-t [&>div+div]:border-[var(--line)]">
+        <dl className="mt-7 border-y border-border [&>div]:flex [&>div]:items-center [&>div]:justify-between [&>div]:gap-4 [&>div]:py-4 [&>div+div]:border-t [&>div+div]:border-border">
           <div>
-            <dt className="text-[14px] text-muted">
+            <dt className="text-[14px] text-text-muted">
               Lot tersedia{region ? ` di ${region.name}` : ""}
             </dt>
             <dd className="font-display text-[22px] tabular-nums md:text-[24px]">
@@ -208,7 +200,7 @@ export default function UmkmDemo() {
             </dd>
           </div>
           <div>
-            <dt className="text-[14px] text-muted">Harga tetap regional</dt>
+            <dt className="text-[14px] text-text-muted">Harga tetap regional</dt>
             <dd className="font-display text-[22px] tabular-nums md:text-[24px]">
               <Counter
                 value={region?.pricePerKg ?? null}
@@ -218,7 +210,7 @@ export default function UmkmDemo() {
             </dd>
           </div>
           <div>
-            <dt className="text-[14px] text-muted">
+            <dt className="text-[14px] text-text-muted">
               Perkiraan biaya ({kg} kg × {region?.pricePerKg ? rupiah(region.pricePerKg) : "harga tetap"})
             </dt>
             <dd className="font-display text-[22px] tabular-nums md:text-[24px]">
@@ -230,19 +222,19 @@ export default function UmkmDemo() {
         <div className="mt-7 flex gap-2">
           <Link
             href="/masuk"
-            className="flex items-center bg-teal px-[22px] py-[17px] text-[14px] font-medium text-white transition-colors hover:bg-[#083f3c]"
+            className="flex items-center bg-brand px-[22px] py-[17px] text-[14px] font-medium text-on-dark transition-colors hover:bg-brand-hover"
           >
             Daftar sebagai UMKM
           </Link>
           <Link
             href="/masuk"
             aria-label="Menuju halaman daftar"
-            className="flex size-[52px] items-center justify-center bg-teal text-[18px] text-white transition-colors hover:bg-[#083f3c]"
+            className="flex size-[52px] items-center justify-center bg-brand text-[18px] text-on-dark transition-colors hover:bg-brand-hover"
           >
-            ↗
+            <Icon name="arrow-up-right" size={18} />
           </Link>
         </div>
-        <p className="mt-6 text-[14px] leading-[1.45] text-muted">
+        <p className="mt-6 text-[14px] leading-[1.45] text-text-muted">
           {region
             ? "Angka contoh untuk demo, bukan harga pasar. Biaya = kebutuhan × harga tetap regional."
             : "Angka muncul setelah survei harga di wilayah percobaan. Bukan penawaran."}
@@ -252,7 +244,7 @@ export default function UmkmDemo() {
       {/* Foto + penanda kebutuhan */}
       <div className="relative min-h-[360px] flex-1 overflow-hidden rounded-[2px] lg:min-h-[560px]">
         <Image
-          src="/images/umkm.png"
+          src="/images/umkm.webp"
           alt="Meja potong penjahit berisi kain dan pola"
           fill
           sizes="(min-width: 1024px) 700px, 100vw"
@@ -263,7 +255,7 @@ export default function UmkmDemo() {
             <motion.div
               key="penanda"
               aria-hidden="true"
-              className="absolute left-[23.6%] top-[32.5%] border border-dashed border-white"
+              className="absolute left-[23.6%] top-[32.5%] border border-dashed border-on-dark"
               initial={{ opacity: 0, width: "0%", height: "0%" }}
               animate={{
                 opacity: 1,
@@ -273,7 +265,7 @@ export default function UmkmDemo() {
               }}
               exit={{ opacity: 0, transition: { duration: 0.2 } }}
             >
-              <span className="absolute -top-[26px] left-0 whitespace-nowrap bg-white/90 px-2.5 py-1 text-[12px] md:text-[13px]">
+              <span className="absolute -top-[26px] left-0 whitespace-nowrap bg-card/90 px-2.5 py-1 text-[12px] md:text-[13px]">
                 {region.name} · {kg} kg
               </span>
               {[
@@ -283,7 +275,7 @@ export default function UmkmDemo() {
               ].map(([x, y], i) => (
                 <motion.span
                   key={i}
-                  className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-ink"
+                  className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-on-dark bg-inverse"
                   style={{ left: `${x}%`, top: `${y}%` }}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1, transition: { delay: 0.35 + i * 0.1, ease: EASE, duration: 0.4 } }}

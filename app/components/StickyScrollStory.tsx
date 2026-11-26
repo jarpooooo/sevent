@@ -1,18 +1,11 @@
 "use client";
 
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from "motion/react";
+import { animate, m as motion, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 import { useSafeReducedMotion } from "./useSafeReducedMotion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { gridLines } from "./gridLines";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 /**
  * StickyScrollStory — adaptasi komponen Framer "Sticky Scroll Story", ditenagai Motion.
@@ -45,7 +38,6 @@ type Props = {
 
 const ROWS = 8;
 const FADE = 0.3; // porsi segmen untuk masuk / keluar, seperti versi Framer
-const SPREAD = 0.7; // lebar gelombang sapuan awal
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
@@ -63,8 +55,6 @@ function tileScore(r: number, c: number, cols: number) {
   const cy = (r + 0.5) / ROWS;
   const zoneX = cols <= 4 ? 0.1 : 0.17;
   if (cx > zoneX && cx < 1 - zoneX && cy > 0.25 && cy < 0.75) return 9;
-  // jendela bawaan di baris atas: terbuka sejak awal, seperti di desain
-  if (r === 0 && hash(r + 7, c + 3) < 0.3) return -1;
   return cy * 0.55 + hash(r, c) * 0.45;
 }
 
@@ -86,54 +76,89 @@ const ORIGIN: Record<Dir, string> = {
   right: "100% 50%",
 };
 
-/* ---------- Tile mosaik (terhubung ke scroll) ---------- */
+/* ---------- Mosaik (terhubung ke scroll) ---------- */
 
-function ScrollTile({
-  r,
-  c,
+type TileMeta = { s: number; axis: "x" | "y"; origin: string; fixed: boolean };
+
+/**
+ * Seluruh tile diperbarui dari SATU langganan scroll, langsung ke DOM, dan hanya tile yang
+ * nilainya berubah yang ditulis. Saat scroll, kebanyakan tile sudah penuh tertutup atau terbuka,
+ * jadi yang disentuh hanya beberapa daun jendela di pita transisi.
+ */
+function TileGrid({
   cols,
   total,
   progress,
-  intro,
   reduce,
 }: {
-  r: number;
-  c: number;
   cols: number;
   total: number;
   progress: MotionValue<number>;
-  intro: MotionValue<number>;
   reduce: boolean;
 }) {
-  const s = tileScore(r, c, cols);
-  const dir = DIRS[Math.floor(hash(r + 40, c + 40) * 4)];
-  const axis = dir === "top" || dir === "bottom" ? "y" : "x";
-  const fixed = s >= 9; // zona teks: tidak ikut sapuan, selalu tertutup
-  // sapuan awal merambat diagonal dari kiri atas ke kanan bawah
-  const d = ((c + 0.5) / cols + (r + 0.5) / ROWS) * 0.5 * SPREAD;
+  const refs = useRef<(HTMLDivElement | null)[]>([]);
+  const last = useRef<number[]>([]);
 
-  const cover = useTransform([progress, intro] as MotionValue<number>[], ([p, i]: number[]) => {
-    if (fixed) return 1;
-    const open = 0.05 + 1.0 * clamp(p / ((total - 1) / total));
-    const base = clamp((s - open) * 30 + 0.5); // 1 = tertutup, 0 = terbuka
-    if (reduce) return base;
-    const local = clamp(i * (1 + SPREAD) - d);
-    const q = Math.sin(Math.PI * local); // 0 -> 1 -> 0: jendela terbuka sebentar saat sapuan lewat
-    return (1 - q) * (1 - local * (1 - base));
-  });
+  const meta = useMemo<TileMeta[]>(
+    () =>
+      Array.from({ length: ROWS * cols }, (_, k) => {
+        const r = Math.floor(k / cols);
+        const c = k % cols;
+        const s = tileScore(r, c, cols);
+        const dir = DIRS[Math.floor(hash(r + 40, c + 40) * 4)];
+        return {
+          s,
+          axis: dir === "top" || dir === "bottom" ? "y" : "x",
+          origin: ORIGIN[dir],
+          fixed: s >= 9, // zona teks: selalu tertutup
+        };
+      }),
+    [cols],
+  );
+
+  const update = useCallback(() => {
+    const p = progress.get();
+    // Sebelum di-scroll semua tile tertutup (layar bersih); foto baru terbuka seiring scroll
+    const open = clamp(p / ((total - 1) / total));
+    for (let k = 0; k < meta.length; k++) {
+      const el = refs.current[k];
+      const t = meta[k];
+      if (!el || t.fixed) continue;
+      const v = clamp((t.s - open) * 30 + 0.5); // 1 = tertutup, 0 = terbuka
+      const prev = last.current[k];
+      if (prev !== undefined && Math.abs(prev - v) < 0.004) continue;
+      last.current[k] = v;
+      if (reduce) el.style.opacity = String(v);
+      else el.style.transform = t.axis === "y" ? `scaleY(${v})` : `scaleX(${v})`;
+    }
+  }, [meta, progress, total, reduce]);
+
+  useMotionValueEvent(progress, "change", update);
+  useEffect(() => {
+    last.current = [];
+    update();
+  }, [update]);
 
   return (
-    <div className="relative">
-      <motion.div
-        className="absolute inset-0 bg-bg"
-        style={
-          reduce
-            ? { opacity: cover }
-            : axis === "y"
-              ? { scaleY: cover, transformOrigin: ORIGIN[dir] }
-              : { scaleX: cover, transformOrigin: ORIGIN[dir] }
-        }
-      />
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px] grid [contain:strict]"
+      style={{
+        gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+      }}
+    >
+      {meta.map((t, k) => (
+        <div key={k} className="relative">
+          <div
+            ref={(el) => {
+              refs.current[k] = el;
+            }}
+            className="absolute inset-0 bg-surface"
+            style={{ transformOrigin: t.origin }}
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -170,7 +195,8 @@ function StoryItem({
 
   const opacity = useTransform(progress, range, op);
   const translateY = useTransform(progress, range, y);
-  const filter = useTransform(progress, range, bl.map(blur));
+  const blurPx = useTransform(progress, range, bl);
+  const filter = useTransform(blurPx, (v) => (v < 0.05 ? "none" : blur(v)));
   const pointerEvents = useTransform(opacity, (o) => (interactive && o > 0.6 ? "auto" : "none"));
 
   return (
@@ -214,8 +240,8 @@ export default function StickyScrollStory({
   introTitle,
   image,
   finale,
-  activeDotColor = "#0a4f4b",
-  inactiveDotColor = "#c9d0ca",
+  activeDotColor = "var(--color-brand)",
+  inactiveDotColor = "var(--color-dot-idle)",
 }: Props) {
   const total = texts.length + 2; // intro + cerita + penutup
   const dotCount = texts.length + 1;
@@ -246,59 +272,31 @@ export default function StickyScrollStory({
   const lastStart = (total - 1) / total;
   const dotsOpacity = useTransform(scrollYProgress, [lastStart - 0.05, lastStart], [1, 0]);
 
-  const tiles = Array.from({ length: ROWS * cols }, (_, k) => k);
 
   return (
     <section
       ref={wrapRef}
       aria-label="Cerita ClearanceLoop"
       className="relative"
-      style={{ height: `${total * 90}svh` }}
+      style={{ height: `${total * 140}svh` }}
     >
-      <div className="sticky top-0 h-svh overflow-clip bg-bg">
+      <div className="sticky top-0 h-svh overflow-clip bg-surface">
         {/* Foto latar (parallax) */}
         <motion.div className="absolute inset-x-0 top-0 h-[125%]" style={{ y: photoY, willChange: "transform" }}>
           <Image src={image} alt="" fill priority sizes="100vw" className="object-cover" />
         </motion.div>
 
         {/* Mosaik penutup */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px] grid"
-          style={{
-            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-          }}
-        >
-          {tiles.map((k) => (
-            <ScrollTile
-              key={`${cols}-${k}`}
-              r={Math.floor(k / cols)}
-              c={k % cols}
-              cols={cols}
-              total={total}
-              progress={scrollYProgress}
-              intro={intro}
-              reduce={reduce}
-            />
-          ))}
-        </div>
+        <TileGrid cols={cols} total={total} progress={scrollYProgress} reduce={reduce} />
         {/* Garis antar tile selalu terlihat */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px] grid"
-          style={{
-            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-          }}
-        >
-          {tiles.map((k) => (
-            <div key={k} className="shadow-[inset_0_0_0_4px_var(--bg)]" />
-          ))}
-        </div>
+          className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px]"
+          style={gridLines(cols, ROWS)}
+        />
 
         {/* Bar atas menutup foto di bawah navbar */}
-        <div className="absolute inset-x-0 top-0 h-[72px] bg-bg" />
+        <div className="absolute inset-x-0 top-0 h-[72px] bg-surface" />
 
         {/* Konten: intro, cerita, penutup */}
         <div className="absolute inset-x-0 bottom-0 top-[72px]">
@@ -318,7 +316,7 @@ export default function StickyScrollStory({
 
           {texts.map((t, i) => (
             <StoryItem key={t} index={i + 1} total={total} progress={scrollYProgress}>
-              <p className="font-display max-w-[760px] text-center text-[clamp(26px,3.1vw,44px)] leading-[1.2] tracking-[-0.04em] text-ink">
+              <p className="font-display max-w-[760px] text-center text-[clamp(26px,3.1vw,44px)] leading-[1.2] tracking-[-0.04em] text-text">
                 {t}
               </p>
             </StoryItem>
@@ -331,21 +329,21 @@ export default function StickyScrollStory({
             className="flex-col text-center"
             interactive
           >
-            <h2 className="font-display text-[clamp(40px,6.4vw,92px)] leading-[0.98] tracking-[-0.04em]">
+            <h2 className="font-display text-[clamp(25px,4.5vw,60px)] leading-[0.98] tracking-[-0.04em]">
               {finale.title.map((l) => (
                 <span key={l} className="block">
                   {l}
                 </span>
               ))}
             </h2>
-            <p className="mt-5 max-w-[440px] text-[clamp(14px,1.2vw,16px)] leading-[1.55] text-muted">
+            <p className="mt-5 max-w-[440px] text-[clamp(14px,1.2vw,16px)] leading-[1.55] text-text-muted">
               {finale.body}
             </p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <motion.div whileTap={{ scale: 0.97 }}>
                 <Link
                   href={finale.primary.href}
-                  className="block rounded-[2px] bg-teal px-6 py-3.5 text-[14px] font-medium text-white transition-colors hover:bg-[#083f3c]"
+                  className="block rounded-[2px] bg-brand px-6 py-3.5 text-[14px] font-medium text-on-dark transition-colors hover:bg-brand-hover"
                 >
                   {finale.primary.label}
                 </Link>
@@ -353,7 +351,7 @@ export default function StickyScrollStory({
               <motion.div whileTap={{ scale: 0.97 }}>
                 <Link
                   href={finale.secondary.href}
-                  className="block rounded-[2px] border border-ink px-6 py-3.5 text-[14px] font-medium transition-colors hover:bg-ink hover:text-bg"
+                  className="block rounded-[2px] border border-text px-6 py-3.5 text-[14px] font-medium transition-colors hover:bg-inverse hover:text-surface"
                 >
                   {finale.secondary.label}
                 </Link>

@@ -1,20 +1,24 @@
 "use client";
 
-import { motion, useInView } from "motion/react";
-import { useSafeReducedMotion } from "./useSafeReducedMotion";
+import { useInView } from "motion/react";
 import { useRef, useSyncExternalStore } from "react";
+import { gridLines } from "./gridLines";
+import { useSafeReducedMotion } from "./useSafeReducedMotion";
 
 /**
- * Mosaik penutup: grid tile warna bg di atas foto. Tile yang dibuka = "jendela" ke foto.
+ * Mosaik penutup: grid tile warna surface di atas foto. Tile yang dibuka = "jendela" ke foto.
  *
  * Tiap tile adalah daun jendela yang menutup/membuka lewat scale dari satu sisi.
  * Gelombang (delay) merambat dari titik `origin`: saat dimuat, saat panel di-hover,
  * dan saat pola berganti (mis. pindah tab), jadi perubahan terbaca sebagai satu gerakan.
  * Keadaan awal (SSR) = semua tertutup, sama dengan akhir tanpa JS, jadi tidak ada kilatan foto.
+ *
+ * Murni transisi CSS (transform/opacity): tanpa instance komponen animasi per tile,
+ * jadi ratusan tile tetap murah dan jalan di compositor.
  */
 export type Rect = { x0: number; x1: number; y0: number; y1: number };
 
-const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 function hash(r: number, c: number, seed: number) {
   let h = (r * 73856093) ^ (c * 19349663) ^ Math.imul(seed, 83492791) ^ 0x9e3779b9;
@@ -77,15 +81,11 @@ export default function MosaicCover({
   );
   const ready = trigger === "mount" ? mounted : inView;
 
-  // Lebar gelombang total tetap ~0.5 detik, berapa pun jumlah tile.
+  // Lebar gelombang total ~0.5 detik, berapa pun jumlah tile.
   const maxDist = Math.hypot(Math.max(origin.x, 1 - origin.x), Math.max(origin.y, 1 - origin.y));
 
   return (
-    <div
-      ref={ref}
-      aria-hidden="true"
-      className={`pointer-events-none ${className}`}
-    >
+    <div ref={ref} aria-hidden="true" className={`pointer-events-none ${className}`}>
       <div
         className="absolute inset-0 grid"
         style={{
@@ -104,22 +104,24 @@ export default function MosaicCover({
               hash(r, c, seed) >= openRatio;
 
           const dir = DIRS[Math.floor(hash(r, c, seed + 99) * 4)];
-          const axis = dir === "top" || dir === "bottom" ? "scaleY" : "scaleX";
+          const axis = dir === "top" || dir === "bottom" ? "Y" : "X";
           const target = ready && (!closed || hidden) ? 0 : 1;
           const dist = Math.hypot(cx - origin.x, cy - origin.y) / (maxDist || 1);
           const delay = (ready ? startDelay : 0) + dist * 0.5 + hash(r, c, seed + 7) * 0.1;
+          const dur = target === 0 ? 0.6 : 0.45;
 
           return (
             <div key={k} className="relative">
-              <motion.div
-                className="absolute inset-0 bg-bg"
-                style={{ transformOrigin: ORIGIN[dir] }}
-                initial={false}
-                animate={reduce ? { opacity: target } : { [axis]: target }}
-                transition={
+              <div
+                className="absolute inset-0 bg-surface"
+                style={
                   reduce
-                    ? { duration: 0.3 }
-                    : { duration: target === 0 ? 0.6 : 0.45, ease: EASE, delay }
+                    ? { opacity: target, transition: "opacity 0.3s linear" }
+                    : {
+                        transform: `scale${axis}(${target})`,
+                        transformOrigin: ORIGIN[dir],
+                        transition: `transform ${dur}s ${EASE} ${delay.toFixed(3)}s`,
+                      }
                 }
               />
             </div>
@@ -128,20 +130,14 @@ export default function MosaicCover({
       </div>
 
       {/* Garis tipis antar tile: ikut memudar saat mosaik dibuka penuh */}
-      <motion.div
-        className="absolute inset-0 grid"
+      <div
+        className="absolute inset-0"
         style={{
-          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+          ...gridLines(cols, rows),
+          opacity: hidden ? 0 : 1,
+          transition: `opacity 0.5s ${EASE}`,
         }}
-        initial={false}
-        animate={{ opacity: hidden ? 0 : 1 }}
-        transition={{ duration: 0.5, ease: EASE }}
-      >
-        {Array.from({ length: cols * rows }, (_, k) => (
-          <div key={k} className="shadow-[inset_0_0_0_4px_var(--bg)]" />
-        ))}
-      </motion.div>
+      />
     </div>
   );
 }

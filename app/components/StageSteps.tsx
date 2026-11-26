@@ -2,14 +2,16 @@
 
 import {
   AnimatePresence,
-  motion,
-  useMotionValueEvent,
-  useScroll,
+  m as motion,
+  useInView,
   type Variants,
 } from "motion/react";
 import { useSafeReducedMotion } from "./useSafeReducedMotion";
 import Image from "next/image";
 import { useRef, useState } from "react";
+
+// Detik per tahap sebelum geser otomatis ke tahap berikutnya
+const COUNTDOWN_S = 7;
 
 type Card = {
   title: string;
@@ -31,7 +33,7 @@ const STEPS: Step[] = [
     stepper: "Masuk",
     word: "Masuk",
     note: "Daftar atau masuk, lalu lanjut mencari bahan.",
-    image: "/images/stage-1.png",
+    image: "/images/stage-1.webp",
     cards: [
       {
         title: "Masuk dulu.",
@@ -44,7 +46,7 @@ const STEPS: Step[] = [
     stepper: "Cari & bandingkan",
     word: "Cari",
     note: "Pabrik asal terlihat di setiap lot.",
-    image: "/images/stage-2.png",
+    image: "/images/stage-2.webp",
     cards: [
       {
         title: "Isi kebutuhanmu.",
@@ -57,7 +59,7 @@ const STEPS: Step[] = [
     stepper: "Pilih model beli",
     word: "Pilih",
     note: "Dua model beli. Kamu yang memilih.",
-    image: "/images/stage-3.png",
+    image: "/images/stage-3.webp",
     cards: [
       {
         title: "Harga tetap regional",
@@ -77,7 +79,7 @@ const STEPS: Step[] = [
     stepper: "Jumlah & kirim",
     word: "Kirim",
     note: "Kg atau budget tidak cocok? Ubah kg atau pilih listing di kanal lain.",
-    image: "/images/stage-4.png",
+    image: "/images/stage-4.webp",
     cards: [
       {
         title: "Ambil sendiri",
@@ -100,12 +102,12 @@ const STEPS: Step[] = [
     stepper: "Terima",
     word: "Terima",
     note: "Bukti pengiriman dan konfirmasi terima tercatat di pesananmu.",
-    image: "/images/stage-5.png",
+    image: "/images/stage-5.webp",
     cards: [],
   },
 ];
 
-const BAR = { teal: "#0a4f4b", ochre: "#e8a33d" } as const;
+const BAR = { teal: "var(--color-brand)", ochre: "var(--color-accent)" } as const;
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /** Gambar baru menyapu naik (atau turun saat scroll balik) di atas gambar lama, seperti daun jendela. */
@@ -146,7 +148,7 @@ function Layer({ s, reduce }: { s: Step; reduce: boolean }) {
           {s.cards.map((c, i) => (
             <motion.article
               key={c.title}
-              className="rounded-[20px] bg-white/[0.93] p-4 backdrop-blur-sm md:w-[380px] md:p-7"
+              className="rounded-[20px] bg-card/[0.93] p-4 md:w-[380px] md:p-7"
               initial={{ opacity: 0, y: reduce ? 0 : 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: EASE, delay: 0.5 + i * 0.1 }}
@@ -171,7 +173,7 @@ function Layer({ s, reduce }: { s: Step; reduce: boolean }) {
                 {c.title}
               </h3>
               <p
-                className={`mt-2 text-[13px] leading-[1.5] text-[#4a544d] md:mt-3.5 md:text-[15px] ${
+                className={`mt-2 text-[13px] leading-[1.5] text-text-soft md:mt-3.5 md:text-[15px] ${
                   s.cards.length > 1 ? "hidden sm:block" : ""
                 }`}
               >
@@ -184,7 +186,7 @@ function Layer({ s, reduce }: { s: Step; reduce: boolean }) {
       )}
 
       <motion.p
-        className="absolute bottom-[calc(var(--w)*0.92+10px)] left-4 right-4 text-[13px] leading-5 text-white md:bottom-[72px] md:left-auto md:right-8 md:w-[300px] md:text-[14px]"
+        className="absolute bottom-[calc(var(--w)*0.92+10px)] left-4 right-4 text-[13px] leading-5 text-on-dark md:bottom-[72px] md:left-auto md:right-8 md:w-[300px] md:text-[14px]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.7 }}
@@ -195,7 +197,7 @@ function Layer({ s, reduce }: { s: Step; reduce: boolean }) {
       {/* Kata besar: huruf naik dari topeng */}
       <p
         aria-label={s.word}
-        className="font-display absolute bottom-0 left-4 whitespace-nowrap leading-[0.95] tracking-[-0.05em] text-white md:left-7"
+        className="font-display absolute bottom-0 left-4 whitespace-nowrap leading-[0.95] tracking-[-0.05em] text-on-dark md:left-7"
         style={{ fontSize: "var(--w)" }}
       >
         {s.word.split("").map((ch, i) => (
@@ -216,25 +218,36 @@ function Layer({ s, reduce }: { s: Step; reduce: boolean }) {
 }
 
 export default function StageSteps() {
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLElement>(null);
   const reduce = !!useSafeReducedMotion();
   const [{ step, dir }, setState] = useState({ step: 0, dir: 1 });
   const n = STEPS.length;
 
-  const { scrollYProgress } = useScroll({ target: wrapRef, offset: ["start start", "end end"] });
-  useMotionValueEvent(scrollYProgress, "change", (p) => {
-    const i = Math.min(n - 1, Math.floor(p * n));
+  // Slideshow biasa: ganti tahap hanya lewat klik pada daftar di bawah gambar
+  const goTo = (i: number) =>
     setState((prev) => (prev.step === i ? prev : { step: i, dir: i > prev.step ? 1 : -1 }));
-  });
 
-  const goTo = (i: number) => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    const span = el.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: top + span * ((i + 0.5) / n) });
-  };
+  // Hitung mundur habis: maju satu tahap, setelah tahap terakhir kembali ke awal
+  const next = () => setState((prev) => ({ step: (prev.step + 1) % n, dir: 1 }));
 
+  const near = useInView(wrapRef, { once: true, margin: "800px 0px 800px 0px" });
+  const visible = useInView(wrapRef, { margin: "-20% 0px -20% 0px" });
+  const [hover, setHover] = useState(false);
+  const [focusIn, setFocusIn] = useState(false);
+  // Berhenti saat dihover, difokus, di luar layar, atau pengunjung minta gerak dikurangi
+  const running = visible && !hover && !focusIn && !reduce;
+  const bar = (
+    <span
+      key={step}
+      aria-hidden="true"
+      className="stage-countdown absolute inset-x-0 bottom-0 h-[2px] origin-left bg-accent"
+      style={{
+        animationDuration: `${COUNTDOWN_S}s`,
+        animationPlayState: running ? "running" : "paused",
+      }}
+      onAnimationEnd={next}
+    />
+  );
   const pos = (i: number) => (i / (n - 1)) * 100;
   const custom = { dir, reduce };
 
@@ -242,75 +255,115 @@ export default function StageSteps() {
     <section
       ref={wrapRef}
       aria-label="Tahap pembeli"
-      className="relative"
-      style={{ height: `${n * 75}svh` }}
+      className="mx-auto flex max-w-[1440px] flex-col gap-6 px-4 py-16 md:gap-8 md:px-10 md:py-24"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setFocusIn(true)}
+      onBlur={() => setFocusIn(false)}
     >
-      <div className="sticky top-0 flex h-svh flex-col gap-4 overflow-clip bg-bg px-4 pb-6 pt-[88px] md:gap-6 md:px-10 md:pb-6 md:pt-[96px]">
-        <h2 className="font-display text-center text-[clamp(24px,3.4vw,44px)] leading-[1.1] tracking-[-0.025em]">
-          Dari cari bahan sampai bahan tiba.
-        </h2>
+      <h2 className="font-display text-center text-[clamp(26px,3.4vw,44px)] leading-[1.1] tracking-[-0.025em]">
+        Dari cari bahan sampai bahan tiba.
+      </h2>
 
-        {/* Gambar tahap */}
-        <div
-          className="relative min-h-0 flex-1 overflow-hidden rounded-[2px] bg-ink"
-          style={{ "--w": "clamp(84px, min(12.4vw, 22svh), 176px)" } as React.CSSProperties}
-        >
-          <AnimatePresence initial={false} custom={custom}>
-            <motion.div
-              key={step}
-              className="absolute inset-0"
-              custom={custom}
-              variants={layerVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-            >
-              <Layer s={STEPS[step]} reduce={reduce} />
-            </motion.div>
-          </AnimatePresence>
+      {/* Gambar tahap */}
+      <div
+        className="relative h-[560px] overflow-hidden rounded-[2px] bg-inverse md:h-[600px]"
+        style={{ "--w": "clamp(84px, 12.4vw, 176px)" } as React.CSSProperties}
+        aria-live="polite"
+      >
+        {/* Unduh gambar tahap lain lebih awal (prioritas rendah) supaya pergantian tidak menunggu jaringan */}
+        <div aria-hidden="true" className="hidden">
+          {STEPS.map(
+            (st, i) =>
+              near &&
+              i !== step && (
+                <Image
+                  key={st.image}
+                  src={st.image}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1440px) 1360px, 100vw"
+                  loading="eager"
+                  fetchPriority="low"
+                />
+              ),
+          )}
         </div>
+        <AnimatePresence initial={false} custom={custom}>
+          <motion.div
+            key={step}
+            className="absolute inset-0"
+            custom={custom}
+            variants={layerVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+          >
+            <Layer s={STEPS[step]} reduce={reduce} />
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-        {/* Stepper */}
-        <div className="relative h-[34px] shrink-0 md:h-[52px]">
-          <div className="absolute inset-x-0 top-[6px] h-px bg-ink/25" />
+      {/* Daftar tahap: klik untuk mengganti */}
+      <div className="relative">
+        {/* Desktop: garis + penanda */}
+        <div className="relative hidden h-[52px] md:block">
+          <div className="absolute inset-x-0 top-[6px] h-px bg-inverse/25" />
           <motion.span
             aria-hidden="true"
-            className="absolute left-0 top-[6px] h-px w-full origin-left bg-ink"
+            className="absolute left-0 top-[6px] h-px w-full origin-left bg-inverse"
             initial={false}
             animate={{ scaleX: step / (n - 1) }}
             transition={{ duration: 0.8, ease: EASE }}
           />
           <motion.span
             aria-hidden="true"
-            className="absolute top-[2px] size-[10px] bg-ink"
+            className="absolute top-[2px] size-[10px] bg-inverse"
             initial={false}
             animate={{ left: `${pos(step)}%`, x: `-${pos(step)}%` }}
             transition={{ type: "spring", stiffness: 260, damping: 30 }}
           />
-          <ol className="hidden md:block">
+          <ol>
             {STEPS.map((s, i) => (
               <li
                 key={s.stepper}
-                className="absolute top-7"
+                className="absolute top-3"
                 style={i === n - 1 ? { right: 0 } : { left: `${pos(i)}%` }}
               >
                 <button
                   type="button"
                   onClick={() => goTo(i)}
                   aria-current={i === step ? "step" : undefined}
-                  className={`whitespace-nowrap text-[14px] transition-colors duration-300 ${
-                    i === step ? "font-medium text-ink" : "text-muted hover:text-ink"
+                  className={`relative whitespace-nowrap py-3 text-[14px] transition-colors duration-300 ${
+                    i === step ? "font-medium text-text" : "text-text-muted hover:text-text"
                   }`}
                 >
                   {s.stepper}
+                  {i === step && !reduce && bar}
                 </button>
               </li>
             ))}
           </ol>
-          <p className="absolute left-0 top-4 text-[13px] font-medium md:hidden" aria-live="polite">
-            {step + 1}/{n} · {STEPS[step].stepper}
-          </p>
         </div>
+
+        {/* Mobile: deretan tombol yang bisa digeser */}
+        <ol className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden">
+          {STEPS.map((s, i) => (
+            <li key={s.stepper} className="shrink-0">
+              <button
+                type="button"
+                onClick={() => goTo(i)}
+                aria-current={i === step ? "step" : undefined}
+                className={`relative overflow-hidden rounded-full px-4 py-2.5 text-[14px] font-medium transition-colors duration-300 ${
+                  i === step ? "bg-brand text-on-dark" : "bg-brand-soft text-text"
+                }`}
+              >
+                {s.stepper}
+                {i === step && !reduce && bar}
+              </button>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m as motion } from "motion/react";
 import { useSafeReducedMotion } from "./useSafeReducedMotion";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +23,7 @@ const PANELS: Panel[] = [
     id: "umkm",
     title: "UMKM",
     desc: "Cari bahan, pilih cara beli, terima di tempatmu.",
-    image: "/images/alur-umkm.png",
+    image: "/images/alur-umkm.webp",
     detailTitle: "Alur UMKM",
     steps: [
       { t: "Masuk", d: "Daftar sebagai UMKM, lolos verifikasi singkat." },
@@ -39,7 +39,7 @@ const PANELS: Panel[] = [
     id: "pabrik",
     title: "Pabrik",
     desc: "Catat sisa produksi, pilih kanal, terima hasil jualnya.",
-    image: "/images/alur-pabrik.png",
+    image: "/images/alur-pabrik.webp",
     detailTitle: "Alur Pabrik",
     steps: [
       { t: "Daftar", d: "Isi identitas pabrik dan penanggung jawab." },
@@ -57,8 +57,10 @@ const PANELS: Panel[] = [
   },
 ];
 
-// Zona teks default yang selalu tertutup (pecahan panel)
-const KEEP = [{ x0: 0, x1: 0.78, y0: 0.34, y1: 0.7 }];
+// Zona teks default yang selalu tertutup (pecahan panel). Sengaja lebih lebar dari teksnya:
+// satu baris tile di atas dan di bawah teks, serta seluruh lebar panel, ikut tertutup. Foto hanya
+// terbuka di pita atas dan bawah, jadi tidak ada potongan foto yang menempel di dekat tulisan.
+const KEEP = [{ x0: 0, x1: 1, y0: 0.28, y1: 0.84 }];
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function AlurKerja() {
@@ -80,7 +82,7 @@ export default function AlurKerja() {
   return (
     <section
       aria-label="Alur kerja"
-      className="flex flex-col pt-[72px] md:h-svh md:min-h-[640px] md:flex-row"
+      className="flex min-h-svh flex-col pt-[72px] md:h-svh md:min-h-0 md:flex-row"
       onPointerLeave={(e) => e.pointerType === "mouse" && setActive(null)}
     >
       {PANELS.map((p) => {
@@ -90,14 +92,14 @@ export default function AlurKerja() {
             key={p.id}
             onPointerEnter={(e) => e.pointerType === "mouse" && enter(p.id, e)}
             onFocus={() => setActive(p.id)}
-            className={`relative overflow-hidden bg-ink transition-[min-height] duration-500 md:min-h-0 md:flex-1 ${
-              on ? "min-h-[860px]" : "min-h-[520px]"
+            className={`relative flex-1 overflow-hidden bg-inverse transition-[min-height] duration-500 md:min-h-0 ${
+              on ? "min-h-[860px]" : "min-h-[max(340px,calc((100svh-72px)/2))]"
             }`}
           >
             {/* Pembatas tengah 4px per panel, warna bg (bukan border aksen) */}
             <span
               aria-hidden="true"
-              className={`absolute inset-y-0 z-10 hidden w-1 bg-bg md:block ${p.id === "umkm" ? "right-0" : "left-0"}`}
+              className={`absolute inset-y-0 z-10 hidden w-1 bg-surface md:block ${p.id === "umkm" ? "right-0" : "left-0"}`}
             />
             <motion.div
               className="absolute inset-0"
@@ -128,7 +130,7 @@ export default function AlurKerja() {
             {/* Peredam di atas mosaik: teks putih terbaca sejak daun jendela pertama bergerak */}
             <motion.div
               aria-hidden="true"
-              className="absolute inset-0 bg-[rgba(11,15,12,0.62)]"
+              className="absolute inset-0 bg-scrim"
               initial={false}
               animate={{ opacity: on ? 1 : 0 }}
               transition={{ duration: 0.6, ease: EASE }}
@@ -151,11 +153,11 @@ export default function AlurKerja() {
                 <h2 className="font-display text-[clamp(56px,6vw,84px)] leading-none tracking-[-0.04em]">
                   {p.title}
                 </h2>
-                <p className="mt-6 max-w-[420px] text-[clamp(17px,1.4vw,20px)] leading-[1.5] text-muted">
+                <p className="mt-6 max-w-[420px] text-[clamp(17px,1.4vw,20px)] leading-[1.5] text-text-muted">
                   {p.desc}
                 </p>
-                <span className="mt-6 flex items-center gap-2.5 text-[15px] font-medium text-teal">
-                  <span aria-hidden="true" className="size-[10px] rounded-full bg-ochre" />
+                <span className="mt-6 flex items-center gap-2.5 text-[15px] font-medium text-brand">
+                  <span aria-hidden="true" className="size-[10px] rounded-full bg-accent" />
                   <span className="hidden md:inline">Arahkan kursor untuk lihat alurnya</span>
                   <span className="md:hidden">Ketuk untuk lihat alurnya</span>
                 </span>
@@ -165,7 +167,7 @@ export default function AlurKerja() {
             {/* Detail alur */}
             <div
               aria-hidden={!on}
-              className={`absolute inset-0 flex flex-col overflow-y-auto px-8 pb-10 pt-12 text-white md:px-[60px] md:pt-[48px] ${
+              className={`absolute inset-0 flex flex-col overflow-y-auto px-8 pb-10 pt-12 text-on-dark md:px-[60px] md:pb-[clamp(16px,4svh,40px)] md:pt-[clamp(16px,5svh,48px)] ${
                 on ? "" : "pointer-events-none"
               }`}
             >
@@ -183,7 +185,7 @@ export default function AlurKerja() {
                       out: { opacity: 0, transition: { duration: 0.15 } },
                     }}
                   >
-                    <h3 className="overflow-hidden pb-1 font-display text-[clamp(40px,4.2vw,60px)] leading-none tracking-[-0.03em]">
+                    <h3 className="overflow-hidden pb-1 font-display text-[clamp(40px,4.2vw,60px)] leading-none tracking-[-0.03em] md:text-[clamp(30px,min(4.2vw,7svh),60px)]">
                       <motion.span
                         className="block"
                         variants={{
@@ -194,28 +196,28 @@ export default function AlurKerja() {
                         {p.detailTitle}
                       </motion.span>
                     </h3>
-                    <ol className="mt-8 flex flex-col gap-6 md:mt-10">
+                    <ol className="mt-8 flex flex-col gap-6 md:mt-[clamp(12px,4svh,40px)] md:gap-[clamp(10px,2.6svh,24px)]">
                       {p.steps.map((s, i) => (
                         <motion.li
                           key={s.t}
-                          className="flex items-start gap-[18px]"
+                          className="flex items-start gap-[clamp(12px,1.6vw,18px)]"
                           variants={{
                             hidden: { opacity: 0, y: reduce ? 0 : 14 },
                             show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
                           }}
                         >
                           <span
-                            className={`font-display flex size-9 shrink-0 items-center justify-center rounded-full text-[16px] ${
-                              i === p.steps.length - 1 ? "bg-ochre text-ink" : "bg-teal text-white"
+                            className={`font-display flex size-9 shrink-0 items-center justify-center rounded-full text-[16px] md:size-[clamp(28px,4.2svh,36px)] md:text-[clamp(13px,1.9svh,16px)] ${
+                              i === p.steps.length - 1 ? "bg-accent text-text" : "bg-brand text-on-dark"
                             }`}
                           >
                             {i + 1}
                           </span>
                           <div>
-                            <p className="font-display text-[22px] leading-tight tracking-[-0.02em] md:text-[24px]">
+                            <p className="font-display text-[22px] leading-tight tracking-[-0.02em] md:text-[clamp(18px,3.1svh,24px)]">
                               {s.t}
                             </p>
-                            <p className="mt-1 max-w-[460px] text-[15px] leading-[23px] text-white/80 md:text-[16px]">
+                            <p className="mt-1 max-w-[460px] text-[15px] leading-[23px] text-on-dark/80 md:text-[clamp(13px,2svh,16px)] md:leading-[1.45]">
                               {s.d}
                             </p>
                           </div>
@@ -223,7 +225,7 @@ export default function AlurKerja() {
                       ))}
                     </ol>
                     <motion.div
-                      className="mt-auto pt-8"
+                      className="mt-auto pt-8 md:pt-[clamp(12px,3svh,32px)]"
                       variants={{
                         hidden: { opacity: 0, y: reduce ? 0 : 14 },
                         show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
@@ -232,7 +234,7 @@ export default function AlurKerja() {
                       <motion.div whileTap={{ scale: 0.97 }} className="w-fit">
                         <Link
                           href={p.cta.href}
-                          className="block rounded-full bg-white px-[26px] py-3.5 text-[16px] font-medium text-teal transition-colors hover:bg-pale"
+                          className="block rounded-full bg-card px-[26px] py-3.5 text-[16px] font-medium text-brand transition-colors hover:bg-brand-soft md:py-[clamp(10px,1.8svh,14px)]"
                         >
                           {p.cta.label}
                         </Link>
