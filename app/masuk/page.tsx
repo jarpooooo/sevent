@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import MasukView from "../components/MasukView";
+import MasukView from "../features/auth/MasukView";
 
 export const metadata: Metadata = {
   title: "Masuk atau daftar — ClearanceLoop",

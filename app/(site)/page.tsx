@@ -1,15 +1,15 @@
 import dynamic from "next/dynamic";
-import MaterialStrip from "../components/MaterialStrip";
-import StickyScrollStory from "../components/StickyScrollStory";
+import MaterialStrip from "../features/home/MaterialStrip";
+import StickyScrollStory from "../features/home/StickyScrollStory";
 
 // Bagian di bawah layar pertama dipecah jadi chunk sendiri. HTML-nya tetap dirender server,
 // tetapi hidrasinya berlangsung per bagian (bukan satu tugas panjang) dan bundle awal lebih kecil.
-const Pernyataan = dynamic(() => import("../components/Pernyataan"));
-const StageSteps = dynamic(() => import("../components/StageSteps"));
-const UmkmDemo = dynamic(() => import("../components/UmkmDemo"));
-const AsalBahan = dynamic(() => import("../components/AsalBahan"));
-const Faq = dynamic(() => import("../components/Faq"));
-const CtaFooter = dynamic(() => import("../components/CtaFooter"));
+const Pernyataan = dynamic(() => import("../features/home/Pernyataan"));
+const StageSteps = dynamic(() => import("../features/home/StageSteps"));
+const UmkmDemo = dynamic(() => import("../features/home/UmkmDemo"));
+const AsalBahan = dynamic(() => import("../features/home/AsalBahan"));
+const Faq = dynamic(() => import("../features/home/Faq"));
+const CtaFooter = dynamic(() => import("../features/home/CtaFooter"));
 
 const STORY = [
   "Sisa produksi pabrik terlalu sering berakhir di pengepul dengan harga murah.",

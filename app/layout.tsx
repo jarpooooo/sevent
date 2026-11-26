@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Inter } from "next/font/google";
-import MotionProvider from "./components/MotionProvider";
+import MotionProvider from "./components/motion/MotionProvider";
 import "./globals.css";
 
 const archivo = Archivo({

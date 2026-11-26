@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import RoleGuard from "../../components/auth/RoleGuard";
-import PencairanDanaView from "../../components/pabrik/PencairanDanaView";
+import RoleGuard from "../../features/auth/RoleGuard";
+import PencairanDanaView from "../../features/pabrik/PencairanDanaView";
 
 export const metadata: Metadata = {
   title: "Pencairan dana — ClearanceLoop",

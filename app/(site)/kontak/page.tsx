@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import KontakView from "../../components/KontakView";
+import KontakView from "../../features/kontak/KontakView";
 
 export const metadata: Metadata = {
   title: "Kontak — ClearanceLoop",

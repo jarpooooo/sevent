@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import AlurKerja from "../../components/AlurKerja";
+import AlurKerja from "../../features/alur-kerja/AlurKerja";
 
 export const metadata: Metadata = {
   title: "Alur kerja — ClearanceLoop",

@@ -1,4 +1,4 @@
-import Navbar from "../components/Navbar";
+import Navbar from "../components/layout/Navbar";
 
 // Navbar tinggal di layout supaya tetap ada saat pindah halaman,
 // dan garis bawah menu aktif bisa bergeser mulus antar halaman.

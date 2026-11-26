@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import RoleGuard from "../../../components/auth/RoleGuard";
+import RoleGuard from "../../../features/auth/RoleGuard";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import LotDetail from "../../../components/LotDetail";
-import { findLot, LOTS, relatedLots } from "../../../components/katalog/lots";
+import LotDetail from "../../../features/katalog/LotDetail";
+import { getLot, getLots } from "../../../lib/data/lots";
+import { relatedLots } from "../../../lib/domain/lots";
 
 type Params = Promise<{ slug: string }>;
 
-export function generateStaticParams() {
-  return LOTS.map((l) => ({ slug: l.slug }));
+export async function generateStaticParams() {
+  return (await getLots()).map((l) => ({ slug: l.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  const lot = findLot(slug);
+  const lot = await getLot(slug);
   if (!lot) return { title: "Lot tidak ditemukan — ClearanceLoop" };
   return {
     title: `${lot.title} — Katalog ClearanceLoop`,
@@ -23,9 +24,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 async function Lot({ params }: { params: Params }) {
   const { slug } = await params;
-  const lot = findLot(slug);
+  const lot = await getLot(slug);
   if (!lot) notFound();
-  return <LotDetail lot={lot} related={relatedLots(lot)} />;
+  return <LotDetail lot={lot} related={relatedLots(await getLots(), lot)} />;
 }
 
 export default function LotPage({ params }: { params: Params }) {

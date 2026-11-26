@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import RoleGuard from "../../components/auth/RoleGuard";
-import LotSayaView from "../../components/pabrik/LotSayaView";
+import RoleGuard from "../../features/auth/RoleGuard";
+import LotSayaView from "../../features/pabrik/LotSayaView";
 
 export const metadata: Metadata = {
   title: "Lot saya — ClearanceLoop",

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import RoleGuard from "../../components/auth/RoleGuard";
-import ProfilView from "../../components/ProfilView";
+import RoleGuard from "../../features/auth/RoleGuard";
+import ProfilView from "../../features/profil/ProfilView";
 
 export const metadata: Metadata = {
   title: "Profil — ClearanceLoop",

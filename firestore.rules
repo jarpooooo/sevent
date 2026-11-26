@@ -1,0 +1,52 @@
+rules_version = '2';
+
+// ClearanceLoop (proyek kainara-id). Prinsip: tolak semua, lalu buka seperlunya.
+//  - users/{uid}  : dibuat sekali oleh pemiliknya saat login pertama (peran tidak bisa diubah klien).
+//  - lots/{id}    : katalog bisa dibaca siapa saja; hanya pabrik pemilik yang menulis.
+//  - orders/{id}  : hanya pembeli dan pabrik terkait yang membaca; UMKM membuat; pabrik mengubah status.
+// Catatan demo: peran dipilih pengguna saat login pertama. Untuk produksi, peran harus ditetapkan admin.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function roleOf(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.role;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['role', 'name', 'email', 'createdAt'])
+        && request.resource.data.role in ['umkm', 'pabrik'];
+      allow update, delete: if false;
+    }
+
+    match /lots/{lotId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && roleOf(request.auth.uid) == 'pabrik'
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if signedIn()
+        && roleOf(request.auth.uid) == 'pabrik'
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /orders/{orderId} {
+      allow read: if signedIn()
+        && (resource.data.buyerId == request.auth.uid || resource.data.factoryId == request.auth.uid);
+      allow create: if signedIn()
+        && roleOf(request.auth.uid) == 'umkm'
+        && request.resource.data.buyerId == request.auth.uid;
+      allow update: if signedIn()
+        && (resource.data.buyerId == request.auth.uid || resource.data.factoryId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
