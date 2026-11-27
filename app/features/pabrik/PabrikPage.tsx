@@ -22,12 +22,12 @@ export default function PabrikPage({
         <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-2.5">
             <h1 className="font-display text-[clamp(34px,4vw,44px)] leading-[1.1] tracking-[-0.03em]">{title}</h1>
-            <p className="max-w-[640px] text-[15px] leading-6 text-text-muted">{desc}</p>
+            <p className="max-w-[820px] text-[15px] leading-[18px] text-text-muted">{desc}</p>
           </div>
           {action}
         </header>
         <div className="mt-8 flex flex-col gap-8">{children}</div>
-        <p className="pt-10 text-[12px] text-text-muted">{note}</p>
+        <p className="pt-8 text-[12px] text-text-muted">{note}</p>
       </div>
     </section>
   );

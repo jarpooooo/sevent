@@ -33,7 +33,7 @@ export const ACCOUNTS: Record<Role, Account> = {
     provider: "demo",
     name: "Sari Jahit",
     initials: "SJ",
-    chip: "Sari Jahit · UMKM",
+    chip: "Sari Jahit, UMKM",
     kind: "UMKM penjahit",
     email: "sari@jahit.contoh",
     whatsapp: "+62 8xx-xxxx-xxxx",
@@ -45,7 +45,7 @@ export const ACCOUNTS: Record<Role, Account> = {
     provider: "demo",
     name: "Pabrik Contoh",
     initials: "PC",
-    chip: "Pabrik Contoh · Pabrik",
+    chip: "Pabrik Contoh, Pabrik",
     kind: "Pabrik",
     email: "kontak@pabrik.contoh",
     whatsapp: "+62 8xx-xxxx-xxxx",
@@ -133,7 +133,7 @@ export function useAccount(): Account | null | undefined {
       name: s.name,
       initials: initialsOf(s.name) || base.initials,
       photoURL: s.photoURL,
-      chip: `${s.name} · ${s.role === "umkm" ? "UMKM" : "Pabrik"}`,
+      chip: `${s.name}, ${s.role === "umkm" ? "UMKM" : "Pabrik"}`,
       email: s.email ?? base.email,
     };
   }, [s]);

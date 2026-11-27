@@ -1,9 +1,9 @@
-import type { BuyModel, Category, Lot, Unit } from "./types";
+import type { BuyModel, Category, Lot, LotType } from "./types";
 
 export type LotFilter = {
   model?: BuyModel | "semua";
   category?: Category | "semua";
-  unit?: Unit | "semua";
+  lotType?: LotType | "semua";
   q?: string;
 };
 
@@ -14,7 +14,7 @@ export function filterLots(lots: Lot[], f: LotFilter): Lot[] {
     (l) =>
       (!f.model || f.model === "semua" || l.model === f.model) &&
       (!f.category || f.category === "semua" || l.category === f.category) &&
-      (!f.unit || f.unit === "semua" || l.unit === f.unit) &&
+      (!f.lotType || f.lotType === "semua" || l.lotType === f.lotType) &&
       (!q || `${l.title} ${l.category} ${l.origin} ${l.province} ${l.code}`.toLowerCase().includes(q)),
   );
 }

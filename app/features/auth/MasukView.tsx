@@ -19,7 +19,7 @@ const KEEPS = [
 ];
 
 const googleBtn =
-  "flex h-14 w-full items-center justify-center gap-3 rounded-[14px] border border-border-strong bg-card text-[16px] font-medium transition-colors hover:bg-brand-soft disabled:opacity-60 md:h-[clamp(44px,6.2svh,54px)]";
+  "flex h-14 w-full items-center justify-center gap-3 rounded-[2px] border border-border-strong bg-card text-[16px] font-medium transition-colors hover:bg-brand-soft disabled:opacity-60 md:h-[clamp(44px,6.2svh,54px)]";
 
 type Tab = "masuk" | "daftar";
 
@@ -148,7 +148,7 @@ export default function MasukView() {
         {/* my-auto: konten berada di tengah tinggi layar, dan tetap aman bila layar sangat pendek */}
         <div className="my-auto flex w-full max-w-[440px] flex-col gap-5 pb-12 pt-28 md:gap-[clamp(10px,2svh,20px)] md:py-[clamp(48px,7svh,96px)]">
           {account && (
-            <div className="flex items-center justify-between gap-3 rounded-[12px] border border-border bg-brand-soft px-4 py-3 text-[13px]">
+            <div className="flex items-center justify-between gap-3 rounded-[2px] border border-border bg-brand-soft px-4 py-3 text-[13px]">
               <span className="min-w-0 truncate text-text">
                 Sudah masuk sebagai <strong>{account.name}</strong> ({account.role === "umkm" ? "UMKM" : "Pabrik"})
               </span>
@@ -219,7 +219,7 @@ export default function MasukView() {
                   aria-checked={role === r.id}
                   disabled={busy}
                   onClick={() => setRole(r.id)}
-                  className={`flex flex-1 flex-col items-start gap-0.5 rounded-[14px] px-4 py-3 text-left transition-colors md:py-[clamp(8px,1.6svh,13px)] ${
+                  className={`flex flex-1 flex-col items-start gap-0.5 rounded-[2px] px-4 py-3 text-left transition-colors md:py-[clamp(8px,1.6svh,13px)] ${
                     role === r.id
                       ? "border-2 border-brand bg-brand-soft"
                       : "border border-border bg-card hover:bg-brand-soft/50"
@@ -279,7 +279,7 @@ export default function MasukView() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@usahamu.id"
-                  className="h-12 w-full rounded-[12px] border border-border bg-card px-3.5 text-[15px] outline-none placeholder:text-text-muted focus:border-brand md:h-[clamp(40px,5.4svh,46px)]"
+                  className="h-12 w-full rounded-[2px] border border-border bg-card px-3.5 text-[15px] outline-none placeholder:text-text-muted focus:border-brand md:h-[clamp(40px,5.4svh,46px)]"
                 />
               </div>
               <motion.button

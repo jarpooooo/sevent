@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { commission } from "../../lib/domain/pricing";
-import { type Order, useOrders } from "../pesanan/orders";
+import { type Order, useOrders } from "../umkm/pesanan/orders";
 
 export { commission };
 
@@ -19,7 +19,7 @@ export type Incoming = {
   qty: number;
   total: number;
   pickup: "ambil" | "kirim";
-  status: 0 | 1 | 2 | 3;
+  status: Order["status"];
   /** true = berasal dari checkout di browser ini, status bisa dimajukan pabrik */
   live: boolean;
 };
@@ -27,24 +27,24 @@ export type Incoming = {
 const SEED: Incoming[] = [
   {
     id: "CL-0192",
-    buyer: "Sari Jahit · Bantul",
+    buyer: "Sari Jahit, Bantul",
     lot: "Offcut denim polos",
     unit: "kg",
     qty: 25,
     total: 100000,
     pickup: "ambil",
-    status: 2,
+    status: 3,
     live: false,
   },
   {
     id: "CL-0187",
-    buyer: "Kriya B · Sleman",
+    buyer: "Kriya B, Sleman",
     lot: "Offcut denim polos",
     unit: "kg",
     qty: 100,
     total: 1000000,
     pickup: "kirim",
-    status: 3,
+    status: 5,
     live: false,
   },
 ];
@@ -52,7 +52,7 @@ const SEED: Incoming[] = [
 const fromOrder = (o: Order): Incoming => ({
   id: o.id,
   slug: o.slug,
-  buyer: "Sari Jahit · Bantul",
+  buyer: "Sari Jahit, Bantul",
   lot: o.title,
   unit: o.unit,
   qty: o.qty,
@@ -69,8 +69,10 @@ export function useIncoming(): Incoming[] {
 
 export const STATUS_LABEL = (s: Incoming["status"], pickup: Incoming["pickup"]) =>
   [
-    "Perlu disiapkan",
-    "Disiapkan",
-    pickup === "ambil" ? "Siap diambil" : "Dalam pengiriman",
-    "Selesai",
+    "Pesanan dibuat",
+    "Pembayaran berhasil",
+    "Barang dipersiapkan",
+    pickup === "ambil" ? "Siap diambil" : "Dikirim",
+    "Barang diterima",
+    "Transaksi selesai",
   ][s];

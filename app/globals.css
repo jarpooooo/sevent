@@ -19,8 +19,8 @@
   /* Lapis 2: permukaan */
   --color-surface: var(--color-palette-bg); /* latar halaman, tile penutup mosaik */
   --color-card: var(--color-palette-white); /* kartu, input, tombol terang */
-  --color-panel: #f8faf6; /* kartu lot dan panel beli di katalog */
-  --color-line: #cfd7cf; /* garis pemisah di halaman katalog */
+  --color-panel: #f8faf5; /* kartu lot dan panel beli di katalog */
+  --color-line: #c9d0ca; /* garis pemisah di halaman katalog */
   --color-thumb-empty: #c9d2cd; /* thumbnail galeri yang belum ada foto */
   --color-warn-soft: #f6e3be; /* status menunggu tindakan */
   --color-inverse: var(--color-palette-ink); /* permukaan gelap di bawah foto */

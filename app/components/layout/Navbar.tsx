@@ -17,10 +17,9 @@ const UMKM_LINKS = [
   { href: "/kontak", label: "Kontak" },
 ];
 const PABRIK_LINKS = [
-  { href: "/", label: "Beranda" },
   { href: "/lot-saya", label: "Lot saya" },
   { href: "/pesanan-masuk", label: "Pesanan masuk" },
-  { href: "/pencairan-dana", label: "Pencairan dana" },
+  { href: "/tagihan-komisi", label: "Tagihan komisi" },
   { href: "/kontak", label: "Kontak" },
 ];
 
@@ -81,7 +80,14 @@ export default function Navbar() {
                 sizeClass="size-9"
                 textClass="text-[13px]"
               />
-              <span className="hidden whitespace-nowrap text-[13px] font-medium lg:block">{account.chip}</span>
+              <span className="hidden whitespace-nowrap text-[13px] font-medium lg:block">{account.name}</span>
+              <span
+                className={`hidden rounded-full px-2.5 py-[3px] text-[12px] font-medium leading-[15px] lg:block ${
+                  role === "pabrik" ? "bg-warn-soft text-text" : "bg-brand-soft text-brand"
+                }`}
+              >
+                {role === "pabrik" ? "Pabrik" : "UMKM"}
+              </span>
             </Link>
           ) : (
             <motion.div whileTap={{ scale: 0.96 }}>
