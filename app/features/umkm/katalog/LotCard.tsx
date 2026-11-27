@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "../../../components/ui/icons";
 import MosaicCover from "../../../components/mosaic/MosaicCover";
+import { useAvailable } from "../pesanan/orders";
 import { sisaLabel, useAuction } from "./auction";
 import { num, rupiah } from "../../../lib/format";
 import type { Lot } from "../../../lib/domain/types";
@@ -13,11 +14,12 @@ export const MODEL_SHORT = { tetap: "Regional", lelang: "Lelang" } as const;
 
 /** Bar stok: sisa stok dari stok awal. */
 export function StockBar({ lot, className = "" }: { lot: Lot; className?: string }) {
-  const pct = Math.max(0, Math.min(100, (lot.stock / lot.capacity) * 100));
+  const stock = useAvailable(lot.slug, lot.stock);
+  const pct = Math.max(0, Math.min(100, (stock / lot.capacity) * 100));
   return (
     <div className={className}>
       <p className="text-[12px] font-medium">
-        Stok {num(lot.stock)} {lot.unit} dari {num(lot.capacity)} {lot.unit}
+        Stok {num(stock)} {lot.unit} dari {num(lot.capacity)} {lot.unit}
       </p>
       <span aria-hidden="true" className="mt-1.5 block h-[5px] overflow-hidden rounded-full bg-brand-soft">
         <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />

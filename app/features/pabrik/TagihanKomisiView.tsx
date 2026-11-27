@@ -18,7 +18,7 @@ export default function TagihanKomisiView() {
     <PabrikPage
       label="Tagihan komisi"
       title="Tagihan komisi"
-      desc="UMKM transfer langsung ke pabrik. Kami mencatat komisi 2% per pesanan dan menagihnya ke pabrik tiap periode."
+      desc="UMKM membayar lewat virtual account PJP, dana diteruskan ke pabrik setelah barang diterima. Kami mencatat komisi 2% per pesanan dan menagihnya ke pabrik tiap periode."
       note="Nama pabrik, lot, harga, dan stok adalah contoh demo untuk mock up."
     >
       <section

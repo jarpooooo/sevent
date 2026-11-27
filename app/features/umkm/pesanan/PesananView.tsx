@@ -163,7 +163,12 @@ function OrderCard({ r, open, onToggle }: { r: Row; open: boolean; onToggle: () 
             </div>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-              {o.status === 3 && !sample && (
+              {o.status === 3 && !sample && o.pickup === "kirim" && (
+                <p className="rounded-[2px] bg-warn-soft px-3.5 py-3 text-[13px] leading-5">
+                  Menunggu konfirmasi kurir lewat admin.
+                </p>
+              )}
+              {o.status === 3 && !sample && o.pickup === "ambil" && (
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.98 }}
@@ -215,7 +220,9 @@ function OrderCard({ r, open, onToggle }: { r: Row; open: boolean; onToggle: () 
                 {sample
                   ? "Contoh agar alur terlihat. Pesanan sungguhanmu muncul di sini setelah checkout."
                   : next
-                    ? `Selanjutnya: ${next.t}. Tombol simulasi mewakili pabrik dan kurir (demo).`
+                    ? o.pickup === "kirim" && o.status >= 3
+                      ? `Selanjutnya: ${next.t}. Diantar: kurir ${o.courier ?? "(JNE atau J&T)"} yang mengonfirmasi, diteruskan ke panel admin. Konfirmasi kurir diteruskan lewat Panel admin (demo).`
+                      : `Selanjutnya: ${next.t}. Tombol simulasi mewakili pabrik dan kurir (demo).`
                     : "Transaksi selesai. Komisi 2% dicatat dan ditanggung pabrik."}
               </p>
             </div>
@@ -249,7 +256,7 @@ export default function PesananView() {
       <div className="mx-auto max-w-[1440px] px-5 pb-16 pt-9 sm:px-10 lg:px-16">
         <h1 className="font-display text-[clamp(36px,4vw,44px)] leading-[1.1] tracking-[-0.03em]">Pesanan saya</h1>
         <p className="mt-2.5 max-w-[640px] text-[15px] leading-[22px] text-text-muted">
-          Pantau lot yang sudah kamu pesan, dari dibuat sampai diterima. Kamu transfer langsung ke pabrik, tanpa biaya platform.
+          Pantau lot yang sudah kamu pesan, dari dibuat sampai diterima. Kamu membayar lewat virtual account PJP, tanpa biaya platform.
         </p>
 
         <div role="group" aria-label="Saring pesanan" className="mt-7 flex flex-wrap gap-2">

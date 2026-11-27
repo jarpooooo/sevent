@@ -30,7 +30,7 @@ const PANELS: Panel[] = [
       { t: "Cari lot", d: "Pilih Regional (harga tetap) atau Lelang terbalik." },
       {
         t: "Beli dan bayar",
-        d: "Tentukan jumlah, ambil sendiri atau diantar (ongkir ditanggung pembeli). Bayar lewat transfer langsung ke pabrik.",
+        d: "Tentukan jumlah, ambil sendiri atau diantar (ongkir ditanggung pembeli). Bayar lewat virtual account PJP; dana ditahan sampai barang diterima.",
       },
       { t: "Terima barang", d: "Konfirmasi barang tiba. Komplain terbuka 48 jam." },
     ],

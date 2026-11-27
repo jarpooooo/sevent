@@ -9,6 +9,7 @@ import { panel } from "../../../../components/ui/styles";
 import { defaultQty, stepOf } from "../../../../lib/domain/pricing";
 import { BUY_MODEL_LABEL, type Lot } from "../../../../lib/domain/types";
 import { num, rupiah } from "../../../../lib/format";
+import { useAvailable } from "../../pesanan/orders";
 import { sisaLabel, useAuction } from "../auction";
 import { DescentBar } from "../LotCard";
 import { rule } from "./shared";
@@ -20,8 +21,9 @@ export default function BuyPanel({ lot }: { lot: Lot }) {
   const price = auction ? auction.price : (lot.price ?? 0);
 
   const step = stepOf(lot);
-  const min = Math.min(lot.moq, lot.stock);
-  const max = lot.stock;
+  const stock = useAvailable(lot.slug, lot.stock);
+  const min = Math.min(lot.moq, stock);
+  const max = stock;
   const [qty, setQty] = useState(defaultQty(lot));
   const [text, setText] = useState(String(defaultQty(lot)));
 
@@ -30,7 +32,7 @@ export default function BuyPanel({ lot }: { lot: Lot }) {
     setQty(v);
     setText(String(v));
   };
-  const pct = Math.max(0, Math.min(100, (lot.stock / lot.capacity) * 100));
+  const pct = Math.max(0, Math.min(100, (stock / lot.capacity) * 100));
 
   return (
     <aside
@@ -77,7 +79,7 @@ export default function BuyPanel({ lot }: { lot: Lot }) {
       <div className="mt-5 flex items-baseline justify-between text-[14px] font-medium">
         <span>Stok tersedia</span>
         <span className="text-brand tabular-nums">
-          {num(lot.stock)} / {num(lot.capacity)} {lot.unit}
+          {num(stock)} / {num(lot.capacity)} {lot.unit}
         </span>
       </div>
       <span aria-hidden="true" className="mt-2 block h-1.5 overflow-hidden rounded-full bg-brand-soft">

@@ -75,6 +75,7 @@ export const BUY_MODEL_LABEL: Record<BuyModel, string> = {
 
 /** Peran pengguna dan status pesanan dipakai bersama oleh klien dan server. */
 export type Role = "umkm" | "pabrik";
+export type Courier = "JNE" | "J&T";
 export type Pickup = "ambil" | "kirim";
 /**
  * 0 Pesanan dibuat, 1 Pembayaran berhasil, 2 Barang dipersiapkan, 3 Dikirim atau siap diambil,
@@ -93,6 +94,8 @@ export type Order = {
   price: number;
   pickup: Pickup;
   address?: string;
+  /** data penerima saat checkout (NIB tidak ikut) */
+  buyer?: { person: string; business: string; phone: string };
   status: OrderStatus;
   createdAt: string;
   model: BuyModel;
@@ -104,7 +107,12 @@ export type Order = {
   photo?: string;
   focus?: string;
   alt?: string;
-  /** nama berkas bukti transfer yang diunggah (berkasnya sendiri tidak disimpan) */
-  proofName?: string;
+  /** nomor virtual account contoh dari PJP (simulasi, tidak ada uang bergerak) */
+  va?: string;
   paidAt?: string;
+  /** siapa yang mengonfirmasi barang diterima: UMKM (ambil sendiri) atau kurir eksternal (diantar) */
+  /** kurir eksternal pilihan UMKM saat checkout (hanya bila diantar) */
+  courier?: Courier;
+  receivedBy?: "umkm" | "kurir";
+  receivedAt?: string;
 };

@@ -12,7 +12,8 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 const ghost =
   "rounded-[2px] border border-border-strong px-[22px] py-3.5 text-[14px] font-medium transition-colors hover:bg-brand-soft";
 
-const STEPS = ["Identitas", "Bukti usaha", "Cek admin", "Aktif"];
+const STEPS_UMKM = ["Identitas", "Bukti usaha", "Kebutuhan material", "Cek admin"];
+const STEPS_PABRIK = ["Identitas", "Bukti usaha", "Cek admin"];
 
 /** Isi contoh demo, mengikuti desain Figma "Profil UMKM"; versi pabrik menyesuaikan teksnya. */
 const NOTIFS: Record<Role, { t: string; d: string; when: string; unread: boolean }[]> = {
@@ -21,10 +22,14 @@ const NOTIFS: Record<Role, { t: string; d: string; when: string; unread: boolean
     { t: "Pembayaran #CL-0192 berhasil", d: "Pabrik menyiapkan lotmu.", when: "Kemarin", unread: true },
     { t: "Lelang LL-007 berakhir", d: "Kamu belum mengambil lot ini.", when: "2 hari lalu", unread: false },
   ],
+  admin: [
+    { t: "Verifikasi menunggu", d: "Ada akun yang menunggu pemeriksaan di Panel admin.", when: "Baru", unread: true },
+    { t: "Konfirmasi kurir menunggu", d: "Paket terkirim perlu dikonfirmasi lewat kurir.", when: "Kemarin", unread: false },
+  ],
   pabrik: [
     { t: "Pesanan #CL-0192 masuk", d: "Siapkan lot Offcut denim polos.", when: "Baru", unread: true },
     { t: "Lot Offcut denim polos tayang", d: "Terlihat oleh UMKM di provinsimu.", when: "Kemarin", unread: true },
-    { t: "Bukti transfer #CL-0187 masuk", d: "Periksa lalu siapkan barang.", when: "2 hari lalu", unread: false },
+    { t: "Pembayaran #CL-0187 masuk", d: "PJP mengabari, siapkan barang.", when: "2 hari lalu", unread: false },
   ],
 };
 
@@ -64,20 +69,24 @@ function Notifikasi({ role }: { role: Role }) {
   );
 }
 
-type Errs = Partial<Record<"person" | "business" | "phone" | "address" | "nib" | "docs", string>>;
+type Errs = Partial<Record<"person" | "business" | "phone" | "address" | "nib" | "docs" | "fabric" | "monthlyKg", string>>;
 
-function check(f: Profil, forVerify: boolean): Errs {
+function check(f: Profil, forVerify: boolean, isPabrik = false): Errs {
   const e: Errs = {};
   if (!f.person.trim()) e.person = "Isi nama lengkap.";
   if (!f.business.trim()) e.business = "Isi nama usaha.";
   if (!f.phone.trim()) e.phone = "Isi nomor telepon.";
   else if (!phoneValid(f.phone)) e.phone = "Nomor tidak valid. Contoh: 0812 3456 7890.";
   if (!f.address.trim()) e.address = "Isi alamat lengkap.";
-  if (forVerify || f.nib.trim()) {
-    if (!f.nib.trim()) e.nib = "Isi NIB.";
-    else if (!nibValid(f.nib)) e.nib = "NIB terdiri dari 13 angka.";
+  // NIB opsional (penjahit rumahan sering belum punya). Bila diisi harus 13 angka.
+  if (f.nib.trim() && !nibValid(f.nib)) e.nib = "NIB terdiri dari 13 angka.";
+  if (forVerify && !nibValid(f.nib) && f.docs.length === 0) {
+    e.docs = "Belum punya NIB? Unggah minimal satu bukti usaha lain, mis. foto tempat produksi atau katalog produk.";
   }
-  if (forVerify && f.docs.length === 0) e.docs = "Unggah minimal satu dokumen pendukung.";
+  if (forVerify && !isPabrik) {
+    if (!f.needs?.fabric.trim()) e.fabric = "Isi jenis kain yang kamu cari.";
+    if (!/^\d+$/.test((f.needs?.monthlyKg ?? "").trim())) e.monthlyKg = "Isi kapasitas beli per bulan dalam kg (angka).";
+  }
   return e;
 }
 
@@ -117,10 +126,10 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
   const [f, setF] = useState<Profil>(
     saved ?? {
       person: a.name,
-      business: "",
-      phone: a.whatsapp.includes("x") ? "" : a.whatsapp,
-      address: a.address.includes("Contoh") ? "" : a.address,
-      nib: "",
+      business: a.business,
+      phone: a.whatsapp,
+      address: a.address,
+      nib: a.nib ?? "",
       docs: [],
     },
   );
@@ -133,17 +142,20 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
 
   const submitted = !!f.submittedAt && !!saved?.submittedAt;
   const approved = submitted && !!f.approvedAt;
-  const idOk = !check(f, false).person && !check(f, false).business && !check(f, false).phone && !check(f, false).address;
-  const proofOk = nibValid(f.nib) && f.docs.length > 0;
+  const base = check(f, false, isPabrik);
+  const idOk = !base.person && !base.business && !base.phone && !base.address;
+  const proofOk = nibValid(f.nib) || f.docs.length > 0;
+  const needsOk = !!f.needs?.fabric.trim() && /^\d+$/.test((f.needs?.monthlyKg ?? "").trim());
+  const STEPS = isPabrik ? STEPS_PABRIK : STEPS_UMKM;
   const state = (i: number) => {
-    const flags = [idOk, idOk && proofOk, submitted, approved];
+    const flags = isPabrik ? [idOk, idOk && proofOk, approved] : [idOk, idOk && proofOk, idOk && proofOk && needsOk, approved];
     if (flags[i]) return "done";
     const firstOpen = flags.findIndex((d) => !d);
     return i === firstOpen ? "now" : "next";
   };
 
   const save = (verify: boolean) => {
-    const e = check(f, verify);
+    const e = check(f, verify, isPabrik);
     setErrs(e);
     if (Object.keys(e).length) {
       setNote(verify ? "Lengkapi data yang ditandai dulu." : "Periksa isian yang ditandai.");
@@ -152,7 +164,12 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
     const next: Profil = verify ? { ...f, submittedAt: new Date().toISOString() } : f;
     saveProfil(role, next);
     setF(next);
-    setNote(verify ? "Data terkirim. Admin Kainara mengecek NIB dan dokumenmu." : "Profil tersimpan di browser ini.");
+    setNote(verify ? "Data terkirim. Admin Kainara memeriksa bukti usahamu." : "Profil tersimpan di browser ini.");
+  };
+
+  const setNeed = (k: "fabric" | "minSize" | "monthlyKg" | "budget", v: string) => {
+    setF((p) => ({ ...p, needs: { fabric: "", minSize: "", monthlyKg: "", budget: "", ...p.needs, [k]: v } }));
+    setErrs((p) => ({ ...p, fabric: undefined, monthlyKg: undefined }));
   };
 
   const addDocs = (list: FileList | null) => {
@@ -257,7 +274,7 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
             {approved ? "Terverifikasi" : submitted ? "Menunggu cek admin" : "Belum dikirim"}
           </span>
         </div>
-        <ol className="grid grid-cols-4 gap-1.5">
+        <ol className={`grid gap-1.5 ${isPabrik ? "grid-cols-3" : "grid-cols-4"}`}>
           {STEPS.map((s, i) => {
             const st = state(i);
             return (
@@ -272,10 +289,67 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
           })}
         </ol>
 
+        {!isPabrik && (
+          <div className="flex flex-col gap-4">
+            <p className="text-[14px] font-medium leading-[17px]">Kebutuhan material</p>
+            {f.revisionNote && !submitted && (
+              <p role="status" className="rounded-[2px] bg-warn-soft px-3.5 py-3 text-[13px] leading-5">
+                Catatan admin: {f.revisionNote}
+              </p>
+            )}
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Jenis kain yang dicari" error={errs.fabric} htmlFor={`${id}-fabric`}>
+                <input
+                  id={`${id}-fabric`}
+                  className={inputBox}
+                  placeholder="Contoh: denim, katun polos"
+                  value={f.needs?.fabric ?? ""}
+                  disabled={submitted}
+                  onChange={(e) => setNeed("fabric", e.target.value)}
+                  aria-invalid={!!errs.fabric}
+                />
+              </Field>
+              <Field label="Ukuran minimum potongan" htmlFor={`${id}-minsize`} hint="Boleh kosong.">
+                <input
+                  id={`${id}-minsize`}
+                  className={inputBox}
+                  placeholder="Contoh: 20 cm"
+                  value={f.needs?.minSize ?? ""}
+                  disabled={submitted}
+                  onChange={(e) => setNeed("minSize", e.target.value)}
+                />
+              </Field>
+              <Field label="Kapasitas beli per bulan (kg)" error={errs.monthlyKg} htmlFor={`${id}-kg`}>
+                <input
+                  id={`${id}-kg`}
+                  className={`${inputBox} tabular-nums`}
+                  inputMode="numeric"
+                  placeholder="Contoh: 40"
+                  value={f.needs?.monthlyKg ?? ""}
+                  disabled={submitted}
+                  onChange={(e) => setNeed("monthlyKg", e.target.value)}
+                  aria-invalid={!!errs.monthlyKg}
+                />
+              </Field>
+              <Field label="Anggaran per bulan (Rp)" htmlFor={`${id}-budget`} hint="Boleh kosong.">
+                <input
+                  id={`${id}-budget`}
+                  className={`${inputBox} tabular-nums`}
+                  inputMode="numeric"
+                  placeholder="Contoh: 500000"
+                  value={f.needs?.budget ?? ""}
+                  disabled={submitted}
+                  onChange={(e) => setNeed("budget", e.target.value)}
+                />
+              </Field>
+            </div>
+          </div>
+        )}
+
         <Field
-          label="Nomor Induk Berusaha (NIB)"
+          label="Nomor Induk Berusaha (NIB), opsional"
           error={errs.nib}
-          hint="13 angka, ada di dokumen NIB dari OSS."
+          hint="13 angka, ada di dokumen NIB dari OSS. Belum punya? Cukup unggah bukti usaha lain di bawah."
           htmlFor={`${id}-nib`}
         >
           <input
@@ -292,7 +366,7 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
         </Field>
 
         <div className="flex flex-col gap-2">
-          <p className="text-[14px] font-medium leading-[17px]">Dokumen pendukung</p>
+          <p className="text-[14px] font-medium leading-[17px]">Bukti usaha</p>
           <ul className="flex flex-col gap-2">
             {f.docs.map((d) => (
               <li
@@ -320,7 +394,7 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
             >
               <span className="text-[14px] font-medium text-brand">Pilih berkas dokumen</span>
               <span className="text-[12px] leading-[15px] text-text-muted">
-                Salinan NIB, KTP pemilik, foto tempat usaha. JPG, PNG, atau PDF. Di demo ini hanya nama berkas yang dicatat.
+                Foto tempat produksi, hasil kerajinan, katalog produk, akun usaha, atau salinan NIB. JPG, PNG, atau PDF. Di demo ini hanya nama berkas yang dicatat.
               </span>
               <input
                 id={`${id}-docs`}
@@ -348,7 +422,7 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
               ? "Terverifikasi: lotmu bisa tayang di Katalog."
               : "Terverifikasi: akunmu bisa membeli lot yang punya syarat verifikasi."
             : submitted
-              ? "Admin Kainara memeriksa NIB dan dokumenmu. Selama itu, data tidak bisa diubah."
+              ? "Admin Kainara memeriksa bukti usahamu: menyetujui, menolak, atau meminta revisi. Selama itu, data tidak bisa diubah."
               : isPabrik
                 ? "Setelah admin menyetujui, lotmu bisa tayang di Katalog."
                 : "Setelah admin menyetujui, akunmu bisa membeli lot yang punya syarat verifikasi."}
@@ -363,20 +437,6 @@ function ProfilForm({ role, a, saved }: { role: Role; a: Account; saved: Profil 
         >
           Simpan profil
         </motion.button>
-        {submitted && !approved && (
-          <button
-            type="button"
-            onClick={() => {
-              const next = { ...f, approvedAt: new Date().toISOString() };
-              saveProfil(role, next);
-              setF(next);
-              setNote("Demo: admin menyetujui akunmu.");
-            }}
-            className={`${ghost} h-12 py-0`}
-          >
-            Simulasikan persetujuan admin
-          </button>
-        )}
         {!submitted && (
           <button type="button" onClick={() => save(true)} className={`${ghost} h-12 py-0`}>
             Kirim untuk verifikasi
@@ -444,7 +504,13 @@ export default function ProfilView() {
               </button>
             </section>
 
-            <ProfilForm key={role} role={role} a={a} saved={saved} />
+            {role === "admin" ? (
+              <p className="text-[14px] leading-[22px] text-text-muted">
+                Akun admin tidak punya data usaha. Pemeriksaan akun dan konfirmasi kurir ada di Panel admin.
+              </p>
+            ) : (
+              <ProfilForm key={role} role={role} a={a} saved={saved} />
+            )}
           </div>
 
           <div className="w-full shrink-0 lg:w-[444px] lg:pt-[68px]">

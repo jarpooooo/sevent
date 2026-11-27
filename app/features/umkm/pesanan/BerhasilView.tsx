@@ -8,6 +8,7 @@ import MosaicCover from "../../../components/mosaic/MosaicCover";
 import MosaicLoop from "../../../components/mosaic/MosaicLoop";
 import { panel } from "../../../components/ui/styles";
 import { num, rupiah } from "../../../lib/format";
+import { etaOf } from "./eta";
 import { ORDER_STEPS, useOrder } from "./orders";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -36,12 +37,16 @@ export default function BerhasilView() {
   const steps = ORDER_STEPS(o.pickup);
   const total = o.qty * o.price;
   const paid = o.status >= 1;
+  const eta = etaOf(new Date(o.paidAt ?? o.createdAt), o.pickup);
   const rows: [string, string][] = [
     ["Nomor pesanan", `#${o.id}`],
     ["Barang", `${o.title}, ${num(o.qty)} ${o.unit}`],
+    ...(o.buyer ? ([["Penerima", `${o.buyer.person}${o.buyer.business ? `, ${o.buyer.business}` : ""}`], ["Telepon", o.buyer.phone]] as [string, string][]) : []),
     ["Penerimaan", o.pickup === "ambil" ? "Ambil sendiri di pabrik" : `Diantar ke ${o.address ?? "alamatmu"}`],
-    ["Metode bayar", "Transfer langsung ke pabrik"],
-    ["Bukti transfer", o.proofName ?? "Belum diunggah"],
+    ...(o.pickup === "kirim" && o.courier ? ([["Kurir", o.courier === "J&T" ? "J&T Express" : "JNE"]] as [string, string][]) : []),
+    [eta.label, eta.range],
+    ["Metode bayar", "Virtual account lewat PJP (simulasi)"],
+    ["Nomor virtual account", o.va ?? "-"],
     ["Waktu bayar", stamp(o.paidAt)],
   ];
 
@@ -64,8 +69,8 @@ export default function BerhasilView() {
             </h1>
             <p className="max-w-[560px] text-[15px] leading-[22px] text-text-muted">
               {paid
-                ? `${rupiah(total)} sudah kamu transfer ke pabrik. Pabrik memeriksa bukti transfer, lalu menyiapkan lot kamu.`
-                : "Pesanan sudah dibuat, tetapi bukti transfer belum diunggah."}
+                ? `${rupiah(total)} sudah masuk. PJP menahan dana sampai barang diterima, lalu meneruskannya ke pabrik. Pabrik sekarang menyiapkan lotmu.`
+                : "Pesanan sudah dibuat, tetapi pembayaran ke virtual account belum masuk."}
             </p>
           </div>
 
@@ -77,6 +82,7 @@ export default function BerhasilView() {
               </div>
             ))}
           </dl>
+          <p className="-mt-3 max-w-[560px] text-[12px] leading-[15px] text-text-muted">{eta.note} Angka hari adalah contoh demo.</p>
 
           <div className="flex flex-col gap-3">
             <h2 className="text-[18px] font-medium leading-[22px]">Selanjutnya</h2>
@@ -113,7 +119,7 @@ export default function BerhasilView() {
             </Link>
             {!paid && (
               <Link href={`/pesanan-saya/bayar?id=${encodeURIComponent(o.id)}`} className="text-[14px] font-medium text-brand underline underline-offset-4">
-                Unggah bukti transfer
+                Bayar sekarang
               </Link>
             )}
             <Link href="/katalog" className="text-[14px] font-medium text-brand underline underline-offset-4">

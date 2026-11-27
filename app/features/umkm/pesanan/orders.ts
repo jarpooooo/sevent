@@ -4,27 +4,35 @@ import { useSyncExternalStore } from "react";
 
 /**
  * Pesanan demo, disimpan di localStorage browser (bukan server). Tidak ada uang yang bergerak.
- * UMKM transfer langsung ke pabrik dan mengunggah bukti. Kami hanya mencatat komisi 2% yang
- * ditanggung pabrik. Enam status mengikuti keputusan produk.
+ * UMKM membayar ke virtual account PJP. Di produksi, PJP mengabari server lewat webhook; di demo, tombol
+ * simulasi meniru webhook itu. Dana ditahan PJP sampai barang diterima. Komisi 2% ditanggung pabrik. Enam status mengikuti keputusan produk.
  */
-import type { Order, OrderStatus, Pickup } from "../../../lib/domain/types";
+import type { Courier, Order, OrderStatus, Pickup } from "../../../lib/domain/types";
 
-export type { Order, OrderStatus, Pickup };
+export type { Courier, Order, OrderStatus, Pickup };
+
+export const COURIERS: { v: Courier; logo: string; w: number; h: number }[] = [
+  { v: "JNE", logo: "/images/kurir/jne.png", w: 640, h: 257 },
+  { v: "J&T", logo: "/images/kurir/jnt.svg", w: 1000, h: 209 },
+];
 
 export const MAX_STATUS: OrderStatus = 5;
 /** Masa komplain setelah barang diterima. */
 export const COMPLAINT_HOURS = 48;
 
 export const ORDER_STEPS = (pickup: Pickup) => [
-  { t: "Pesanan dibuat", d: "Transfer ke pabrik dan unggah bukti." },
-  { t: "Pembayaran berhasil", d: "Pabrik memeriksa bukti transfer." },
+  { t: "Pesanan dibuat", d: "Bayar ke virtual account." },
+  { t: "Pembayaran berhasil", d: "PJP mengabari bahwa pembayaran masuk." },
   { t: "Barang dipersiapkan", d: "Pabrik menyiapkan lot." },
   {
     t: pickup === "ambil" ? "Siap diambil" : "Dikirim",
     d: pickup === "ambil" ? "Ambil di lokasi pabrik." : "Lot menuju alamatmu.",
   },
-  { t: "Barang diterima", d: "Kamu konfirmasi, masa komplain 48 jam." },
-  { t: "Transaksi selesai", d: "Komisi dicatat, pesanan ditutup." },
+  {
+    t: "Barang diterima",
+    d: pickup === "ambil" ? "Kamu konfirmasi, masa komplain 48 jam." : "Kurir konfirmasi, masa komplain 48 jam.",
+  },
+  { t: "Transaksi selesai", d: "Dana diteruskan ke pabrik, komisi dicatat." },
 ];
 
 const KEY = "kn-orders-v2";
@@ -67,6 +75,7 @@ export function addOrder(o: Omit<Order, "id" | "status" | "createdAt">): Order {
   const order: Order = {
     ...o,
     id: `CL-${Date.now().toString(36).toUpperCase().slice(-6)}`,
+    va: `8077${Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")}`,
     status: 0,
     createdAt: new Date().toISOString(),
   };
@@ -74,19 +83,38 @@ export function addOrder(o: Omit<Order, "id" | "status" | "createdAt">): Order {
   return order;
 }
 
-/** UMKM mengunggah bukti transfer: status naik ke Pembayaran berhasil, pabrik memeriksa bukti. */
-export function submitProof(id: string, proofName: string) {
+/** Simulasi webhook PJP: pembayaran ke virtual account diterima, status naik ke Pembayaran berhasil. */
+export function confirmPayment(id: string) {
   write(
     read().map((o) =>
-      o.id === id && o.status === 0 ? { ...o, status: 1 as OrderStatus, proofName, paidAt: new Date().toISOString() } : o,
+      o.id === id && o.status === 0 ? { ...o, status: 1 as OrderStatus, paidAt: new Date().toISOString() } : o,
     ),
   );
 }
 
+/** Jumlah yang sudah dipesan (dicadangkan) untuk satu lot, dari semua pesanan di browser ini. */
+export const reservedOf = (orders: Order[], slug: string) =>
+  orders.filter((o) => o.slug === slug).reduce((n, o) => n + o.qty, 0);
+
+/** Stok tersedia = stok lot dikurangi pesanan. Stok fisik di gudang baru berkurang saat barang keluar. */
+export function useAvailable(slug: string, stock: number) {
+  return Math.max(0, stock - reservedOf(useOrders(), slug));
+}
+
 export const useOrder = (id: string | null) => useOrders().find((o) => o.id === id);
 
+/** Yang mengonfirmasi barang diterima: UMKM bila ambil sendiri, kurir eksternal (JNE atau J&T) bila diantar. */
+export const receiverOf = (pickup: Pickup): "umkm" | "kurir" => (pickup === "ambil" ? "umkm" : "kurir");
+
 export function advanceOrder(id: string) {
-  write(read().map((o) => (o.id === id && o.status < MAX_STATUS ? { ...o, status: (o.status + 1) as OrderStatus } : o)));
+  write(
+    read().map((o) => {
+      if (o.id !== id || o.status >= MAX_STATUS) return o;
+      const next = (o.status + 1) as OrderStatus;
+      // 3 -> 4 adalah konfirmasi penerimaan; catat siapa yang mengonfirmasi
+      return next === 4 ? { ...o, status: next, receivedBy: receiverOf(o.pickup), receivedAt: new Date().toISOString() } : { ...o, status: next };
+    }),
+  );
 }
 
 export function clearOrders() {

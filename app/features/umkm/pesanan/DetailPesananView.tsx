@@ -1,5 +1,6 @@
 "use client";
 
+import { etaOf } from "./eta";
 import { m as motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -74,6 +75,7 @@ export default function DetailPesananView() {
   const photo = o.photo ?? lot?.photo;
   const demo = !!sample;
   const kirim = o.pickup === "kirim";
+  const eta = etaOf(new Date(o.paidAt ?? o.createdAt), o.pickup);
   // Jendela komplain: 8 ubin x 6 jam. Hanya berjalan setelah barang diterima (status 4).
   const windowDone = o.status === 4 ? 5 : o.status === 5 ? 8 : 0;
 
@@ -127,9 +129,15 @@ export default function DetailPesananView() {
             {kirim ? (
               <Card title="Pengiriman">
                 <dl className="flex flex-col gap-3">
-                  <Row k="Kurir" v="Dipilih pabrik, ongkir dibayar ke kurir" />
+                  <Row k="Kurir" v={`${o.courier === "J&T" ? "J&T Express" : (o.courier ?? "JNE atau J&T")}, ongkir dibayar ke kurir`} />
                   <Row k="Nomor resi" v={o.status >= 3 ? "Diisi pabrik saat dikirim (contoh demo)" : "Muncul setelah barang dikirim"} />
                   <Row k="Tujuan" v={o.address ?? "-"} />
+                  {o.buyer && <Row k="Penerima" v={`${o.buyer.person}, ${o.buyer.phone}`} />}
+                  <Row
+                    k="Konfirmasi diterima"
+                    v={`Oleh kurir ${o.courier ?? "(JNE atau J&T)"}, diteruskan ke panel admin`}
+                  />
+                  {o.status < 4 && <Row k={eta.label} v={`${eta.range} (contoh demo)`} />}
                 </dl>
               </Card>
             ) : (
@@ -137,6 +145,9 @@ export default function DetailPesananView() {
                 <dl className="flex flex-col gap-3">
                   <Row k="Lokasi" v={`Pabrik Contoh, ${place}`} />
                   <Row k="Jadwal" v="Disepakati dengan pabrik setelah barang siap" />
+                  {o.buyer && <Row k="Penerima" v={`${o.buyer.person}, ${o.buyer.phone}`} />}
+                  <Row k="Konfirmasi diterima" v="Oleh kamu, saat barang diambil dan dicek" />
+                  {o.status < 3 && <Row k={eta.label} v={`${eta.range} (contoh demo)`} />}
                   <Row k="Dokumen" v="Tunjukkan nomor pesanan dan identitas penerima" />
                 </dl>
               </Card>
@@ -215,12 +226,12 @@ export default function DetailPesananView() {
                 <p className="font-display text-[28px] leading-8 tabular-nums tracking-[-0.02em] text-brand">{rupiah(total)}</p>
               </div>
               <p className="text-[12px] leading-[15px] text-text-muted">
-                Dipesan {when(o.createdAt)}. Transfer langsung ke pabrik.{demo && " Contoh demo."}
+                Dipesan {when(o.createdAt)}. Dibayar lewat virtual account PJP.{demo && " Contoh demo."}
               </p>
             </section>
 
             <div className="flex flex-col gap-2.5">
-              {o.status === 3 && !demo && (
+              {o.status === 3 && !demo && !kirim && (
                 <button
                   type="button"
                   onClick={() => advanceOrder(o.id)}
@@ -228,6 +239,11 @@ export default function DetailPesananView() {
                 >
                   Konfirmasi barang diterima
                 </button>
+              )}
+              {o.status === 3 && !demo && kirim && (
+                <p className="rounded-[2px] bg-warn-soft px-3.5 py-3 text-[13px] leading-5">
+                  Menunggu konfirmasi kurir yang diteruskan admin. Di demo, buka Panel admin lalu pilih &quot;Teruskan konfirmasi kurir&quot;.
+                </p>
               )}
               {o.status < 3 && !demo && (
                 <button
@@ -265,7 +281,9 @@ export default function DetailPesananView() {
               )}
             </div>
             <p className="text-[12px] leading-[15px] text-text-muted">
-              Konfirmasi hanya setelah paket tiba dan kamu cek isinya. Komplain bisa diajukan dalam {COMPLAINT_HOURS} jam.
+              {kirim
+                ? `Penerimaan dikonfirmasi kurir ${o.courier ?? "(JNE atau J&T)"} dan diteruskan ke panel admin, bukan oleh kamu. Komplain bisa diajukan dalam ${COMPLAINT_HOURS} jam setelah barang diterima.`
+                : `Konfirmasi hanya setelah barang kamu ambil dan cek isinya. Komplain bisa diajukan dalam ${COMPLAINT_HOURS} jam.`}
               {demo && " Tombol simulasi hanya muncul di pesanan yang kamu buat sendiri."}
             </p>
           </aside>

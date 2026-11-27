@@ -13,8 +13,12 @@ export type Profil = {
   docs: string[];
   /** ISO, terisi saat verifikasi dikirim */
   submittedAt?: string;
-  /** ISO, terisi saat admin menyetujui (di demo: tombol simulasi) */
+  /** ISO, terisi saat admin menyetujui */
   approvedAt?: string;
+  /** catatan admin bila meminta revisi data */
+  revisionNote?: string;
+  /** kebutuhan material (UMKM): tahap 3 verifikasi */
+  needs?: { fabric: string; minSize: string; monthlyKg: string; budget: string };
 };
 
 const key = (r: Role) => `kn-profil-v1-${r}`;

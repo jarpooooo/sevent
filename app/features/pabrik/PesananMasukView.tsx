@@ -12,16 +12,19 @@ const W = "110px minmax(0,190px) minmax(0,1fr) 110px 130px 170px minmax(0,190px)
 const tone = (s: Incoming["status"]) => (s === 0 ? "wait" : s === 5 ? "idle" : "ok");
 
 const NEXT = (o: Incoming) =>
-  [
-    "Konfirmasi pembayaran",
-    "Tandai disiapkan",
-    o.pickup === "ambil" ? "Tandai siap diambil" : "Tandai dikirim",
-  ][o.status];
+  [null, "Tandai disiapkan", o.pickup === "ambil" ? "Tandai siap diambil" : "Tandai dikirim"][o.status];
 
 function Action({ o }: { o: Incoming }) {
   if (o.status === 5) return <span className="text-[13px] text-text-muted">Komisi 2% masuk tagihan</span>;
   if (o.status === 4) return <span className="text-[13px] text-text-muted">Masa komplain 48 jam</span>;
-  if (o.status === 3) return <span className="text-[13px] text-text-muted">Menunggu konfirmasi UMKM</span>;
+  if (o.status === 3) {
+    return (
+      <span className="text-[13px] text-text-muted">
+        {o.pickup === "ambil" ? "Menunggu konfirmasi UMKM" : "Menunggu konfirmasi kurir lewat admin"}
+      </span>
+    );
+  }
+  if (o.status === 0) return <span className="text-[13px] text-text-muted">Menunggu pembayaran PJP</span>;
   if (!o.live) return null;
   return (
     <motion.button
@@ -43,7 +46,7 @@ export default function PesananMasukView() {
     <PabrikPage
       label="Pesanan masuk"
       title="Pesanan masuk"
-      desc="Pesanan UMKM atas lotmu. UMKM transfer langsung ke rekening pabrik dan mengunggah bukti. Siapkan barang, lalu tandai siap diambil atau dikirim."
+      desc="Pesanan UMKM atas lotmu. UMKM membayar lewat virtual account PJP; setelah PJP mengabari pembayaran masuk, siapkan barang, lalu tandai siap diambil atau dikirim."
       note="Dua baris terakhir adalah contoh demo. Pesanan yang kamu buat lewat Checkout sebagai UMKM di browser ini muncul di paling atas."
     >
       {live > 0 && (

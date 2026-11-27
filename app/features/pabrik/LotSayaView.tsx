@@ -130,7 +130,7 @@ export default function LotSayaView() {
             </div>
           </dl>
           <p className="text-[12px] leading-[15px] text-text-muted">
-            Angka contoh demo. UMKM transfer langsung ke pabrik. Kami mencatat komisi 2% dan menagihnya ke pabrik tiap
+            Angka contoh demo. UMKM membayar lewat virtual account PJP, dana diteruskan ke pabrik setelah barang diterima. Kami mencatat komisi 2% dan menagihnya ke pabrik tiap
             periode.
           </p>
         </div>

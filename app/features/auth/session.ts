@@ -8,7 +8,7 @@ import { useMemo, useSyncExternalStore } from "react";
  *  - Akun demo lokal tanpa server (provider: "demo").
  * Navbar, profil, checkout, dan pembatas halaman mengikuti sesi ini.
  */
-export type Role = "umkm" | "pabrik";
+export type Role = "umkm" | "pabrik" | "admin";
 export type AuthProviderKind = "google" | "demo";
 
 export type Account = {
@@ -23,8 +23,12 @@ export type Account = {
   kind: string;
   email: string;
   whatsapp: string;
+  /** nama usaha; akun Google belum punya, diisi di profil */
+  business: string;
   address: string;
   province: string;
+  /** NIB contoh, hanya untuk akun demo */
+  nib?: string;
 };
 
 export const ACCOUNTS: Record<Role, Account> = {
@@ -36,9 +40,11 @@ export const ACCOUNTS: Record<Role, Account> = {
     chip: "Sari Jahit, UMKM",
     kind: "UMKM penjahit",
     email: "sari@jahit.contoh",
-    whatsapp: "+62 8xx-xxxx-xxxx",
+    whatsapp: "0812 3456 7890",
+    business: "Sari Jahit Rumahan",
     address: "Jl. Contoh No. 12, Bantul",
     province: "DI Yogyakarta",
+    nib: "1234567890123",
   },
   pabrik: {
     role: "pabrik",
@@ -48,8 +54,23 @@ export const ACCOUNTS: Record<Role, Account> = {
     chip: "Pabrik Contoh, Pabrik",
     kind: "Pabrik",
     email: "kontak@pabrik.contoh",
-    whatsapp: "+62 8xx-xxxx-xxxx",
+    whatsapp: "0813 9876 5432",
+    business: "CV Contoh Tekstil",
     address: "Jl. Industri Contoh No. 3, Kota Yogyakarta",
+    province: "DI Yogyakarta",
+    nib: "9876543210987",
+  },
+  admin: {
+    role: "admin",
+    provider: "demo",
+    name: "Admin Kainara",
+    initials: "AK",
+    chip: "Admin Kainara",
+    kind: "Admin platform",
+    email: "admin@kainara.contoh",
+    whatsapp: "0811 0000 1111",
+    business: "Kainara",
+    address: "Yogyakarta",
     province: "DI Yogyakarta",
   },
 };
@@ -72,10 +93,10 @@ const subs = new Set<() => void>();
 
 function parse(r: string | null): SessionData | null {
   if (!r) return null;
-  if (r === "umkm" || r === "pabrik") return { role: r, provider: "demo" };
+  if (r === "umkm" || r === "pabrik" || r === "admin") return { role: r, provider: "demo" };
   try {
     const j = JSON.parse(r) as SessionData;
-    return j.role === "umkm" || j.role === "pabrik" ? j : null;
+    return j.role === "umkm" || j.role === "pabrik" || j.role === "admin" ? j : null;
   } catch {
     return null;
   }
@@ -129,11 +150,16 @@ export function useAccount(): Account | null | undefined {
     return {
       ...base,
       provider,
+      // akun Google: data demo tidak ikut, pengguna mengisi sendiri di profil
+      business: "",
+      whatsapp: "",
+      address: "",
+      nib: undefined,
       uid: s.uid,
       name: s.name,
       initials: initialsOf(s.name) || base.initials,
       photoURL: s.photoURL,
-      chip: `${s.name}, ${s.role === "umkm" ? "UMKM" : "Pabrik"}`,
+      chip: `${s.name}, ${s.role === "umkm" ? "UMKM" : s.role === "admin" ? "Admin" : "Pabrik"}`,
       email: s.email ?? base.email,
     };
   }, [s]);
@@ -172,4 +198,4 @@ export function takeLogoutFlag() {
 }
 
 /** Tujuan menu "halaman kerja" tiap peran. */
-export const HOME_OF: Record<Role, string> = { umkm: "/katalog", pabrik: "/lot-saya" };
+export const HOME_OF: Record<Role, string> = { umkm: "/katalog", pabrik: "/lot-saya", admin: "/admin" };

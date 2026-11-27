@@ -78,6 +78,12 @@ export default function MasukView() {
     router.push("/");
   };
 
+  // Akun admin hanya ada sebagai akun demo (tidak lewat Google): memverifikasi UMKM dan mengonfirmasi kurir.
+  const signInAdmin = () => {
+    login("admin", { provider: "demo" });
+    router.push("/admin");
+  };
+
   // Login Google sungguhan (Firebase Auth + Firestore users/{uid}).
   const signInGoogle = async () => {
     setBusy(true);
@@ -288,8 +294,16 @@ export default function MasukView() {
                 whileTap={busy ? undefined : { scale: 0.96 }}
                 className="h-[50px] rounded-full bg-brand text-[15px] font-medium text-on-dark transition-colors hover:bg-brand-hover disabled:opacity-60 md:h-[clamp(42px,5.6svh,50px)]"
               >
-                Masuk dengan akun demo ({role === "umkm" ? "Sari Jahit" : "Pabrik Contoh"})
+                Masuk dengan akun demo ({role === "pabrik" ? "Pabrik Contoh" : "Sari Jahit"})
               </motion.button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={signInAdmin}
+                className="self-start text-[13px] font-medium text-brand underline underline-offset-4 hover:text-brand-hover"
+              >
+                Masuk sebagai admin (demo)
+              </button>
             </form>
           ) : (
             <p className="text-[14px] leading-[22px] text-text-muted">

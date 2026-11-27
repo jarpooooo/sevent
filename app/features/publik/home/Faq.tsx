@@ -28,7 +28,7 @@ const ITEMS = [
   },
   {
     q: "Bagaimana bahannya sampai?",
-    a: "Pilih ambil sendiri atau diantar ke alamatmu; ongkir ditanggung pembeli. Kamu transfer langsung ke rekening pabrik dan mengunggah bukti pembayaran. Setelah barang tiba, konfirmasi penerimaan. Komplain terbuka 48 jam setelah barang diterima.",
+    a: "Pilih ambil sendiri atau diantar ke alamatmu; ongkir ditanggung pembeli. Kamu membayar ke virtual account lewat PJP, dan dana ditahan sampai barang diterima. Setelah barang tiba, penerimaan dikonfirmasi (oleh kamu bila ambil sendiri, oleh kurir bila diantar), lalu dana diteruskan ke pabrik. Komplain terbuka 48 jam setelah barang diterima.",
   },
   {
     q: "Siapa yang bisa daftar?",

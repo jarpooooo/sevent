@@ -47,12 +47,12 @@ type OrderStage = {
   note: string;
 };
 
-/** Tahapan perjalanan pesanan: UMKM transfer langsung ke pabrik, lalu konfirmasi penerimaan. */
+/** Tahapan perjalanan pesanan: UMKM bayar lewat virtual account PJP, lalu penerimaan dikonfirmasi. */
 const ORDER_STAGES: OrderStage[] = [
   {
     code: "01",
     label: "Dibayar",
-    note: "UMKM transfer langsung ke rekening pabrik dan mengunggah bukti pembayaran.",
+    note: "UMKM membayar ke virtual account PJP. Dana ditahan sampai barang diterima.",
   },
   {
     code: "02",

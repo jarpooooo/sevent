@@ -4,30 +4,27 @@ import { m as motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useId, useState } from "react";
+import { useState } from "react";
 import MosaicCover from "../../../components/mosaic/MosaicCover";
 import { panel } from "../../../components/ui/styles";
 import { num, rupiah } from "../../../lib/format";
-import { ORDER_STEPS, submitProof, useOrder } from "./orders";
+import { confirmPayment, ORDER_STEPS, useOrder } from "./orders";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-const DEMO_REK = "8077 1234 5678 9012";
+const grouped = (v: string) => v.replace(/(\d{4})(?=\d)/g, "$1 ");
 
 const CARA = [
-  "Buka aplikasi bank, pilih transfer ke rekening pabrik.",
-  "Masukkan nomor rekening di atas, cek nama pabrik dan jumlahnya.",
-  "Selesaikan transfer, lalu unggah bukti transfer di bawah. Pabrik memeriksa bukti itu.",
+  "Buka aplikasi bank atau dompet digital, pilih transfer ke virtual account.",
+  "Masukkan nomor virtual account di atas. Jumlah dan nama tujuan terisi otomatis.",
+  "Selesaikan pembayaran. PJP mengabari Kainara, status pesananmu berubah sendiri.",
 ];
 
-/** Menunggu pembayaran: transfer langsung ke pabrik, unggah bukti. Tidak ada uang yang bergerak (demo). */
+/** Menunggu pembayaran: virtual account PJP. Tombol simulasi meniru webhook PJP; tidak ada uang yang bergerak (demo). */
 export default function BayarView() {
   const id = useSearchParams().get("id");
   const o = useOrder(id);
   const router = useRouter();
-  const fid = useId();
-  const [file, setFile] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);
-  const [tried, setTried] = useState(false);
 
   if (!o) {
     return (
@@ -60,11 +57,8 @@ export default function BayarView() {
     }
   };
 
-  const send = (e: React.FormEvent) => {
-    e.preventDefault();
-    setTried(true);
-    if (!file) return;
-    submitProof(o.id, file.name);
+  const simulate = () => {
+    confirmPayment(o.id);
     router.push(`/pesanan-saya/berhasil?id=${encodeURIComponent(o.id)}`);
   };
 
@@ -76,21 +70,21 @@ export default function BayarView() {
         </nav>
         <h1 className="mt-4 font-display text-[clamp(32px,4vw,44px)] leading-[1.1] tracking-[-0.03em]">Selesaikan pembayaran</h1>
         <p className="mt-2.5 max-w-[640px] text-[15px] leading-[22px] text-text-muted">
-          Transfer langsung ke rekening pabrik, lalu unggah bukti transfer. Kainara tidak memegang uangmu dan tidak menarik biaya darimu.
+          Bayar ke virtual account lewat PJP. Dana ditahan PJP sampai barang diterima, lalu diteruskan ke pabrik. Kainara tidak memegang uangmu dan tidak menarik biaya darimu.
         </p>
 
         <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_444px]">
-          <form onSubmit={send} noValidate className="flex min-w-0 flex-col gap-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <section className={`${panel} flex flex-col gap-5 p-[25px]`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
-                  <p className="text-[13px] leading-4 text-text-muted">Rekening pabrik, contoh demo</p>
-                  <p className="font-display text-[clamp(26px,3vw,34px)] leading-[1.1] tabular-nums tracking-[-0.02em] text-brand">{DEMO_REK}</p>
-                  <p className="text-[13px] leading-4 text-text-muted">a.n. Pabrik di {o.origin ?? "Yogyakarta"}</p>
+                  <p className="text-[13px] leading-4 text-text-muted">Nomor virtual account, contoh demo</p>
+                  <p className="font-display text-[clamp(26px,3vw,34px)] leading-[1.1] tabular-nums tracking-[-0.02em] text-brand">{grouped(o.va ?? "")}</p>
+                  <p className="text-[13px] leading-4 text-text-muted">Tujuan: pabrik di {o.origin ?? "Yogyakarta"}, lewat PJP</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => copy(DEMO_REK.replace(/ /g, ""))}
+                  onClick={() => copy(o.va ?? "")}
                   className="rounded-[2px] border border-border-strong px-5 py-3 text-[14px] font-medium transition-colors hover:bg-surface"
                 >
                   {copied ? "Tersalin" : "Salin nomor"}
@@ -99,7 +93,7 @@ export default function BayarView() {
               <div aria-hidden="true" className="h-px bg-text/10" />
               <dl className="flex flex-col gap-3 text-[14px] leading-[17px]">
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-text-muted">Jumlah yang harus ditransfer</dt>
+                  <dt className="text-text-muted">Jumlah yang harus dibayar</dt>
                   <dd className="font-display text-[24px] leading-7 tabular-nums tracking-[-0.02em]">{rupiah(total)}</dd>
                 </div>
                 {o.model === "lelang" && (
@@ -124,44 +118,27 @@ export default function BayarView() {
             </section>
 
             <section className={`${panel} flex flex-col gap-4 p-[25px]`}>
-              <h2 className="text-[18px] font-medium leading-[22px]">Unggah bukti transfer</h2>
+              <h2 className="text-[18px] font-medium leading-[22px]">Status pembayaran</h2>
               {paid ? (
                 <p className="text-[14px] leading-[20px] text-text-muted">
-                  Bukti sudah terkirim{o.proofName ? `: ${o.proofName}` : ""}.{" "}
+                  Pembayaran sudah dicatat PJP.{" "}
                   <Link href={`/pesanan-saya/berhasil?id=${encodeURIComponent(o.id)}`} className="font-medium text-brand underline underline-offset-4">
                     Lihat status
                   </Link>
                 </p>
               ) : (
                 <>
-                  <label
-                    htmlFor={fid}
-                    className={`flex cursor-pointer flex-col items-center gap-1 rounded-[2px] border border-dashed px-4 py-7 text-center transition-colors hover:bg-brand-soft/50 ${
-                      tried && !file ? "border-text" : "border-brand"
-                    }`}
-                  >
-                    <span className="text-[14px] font-medium text-brand">{file ? file.name : "Pilih foto atau PDF bukti transfer"}</span>
-                    <span className="text-[12px] leading-[15px] text-text-muted">
-                      {file ? `${Math.max(1, Math.round(file.size / 1024))} KB. Klik untuk mengganti.` : "JPG, PNG, atau PDF. Di demo ini hanya nama berkas yang dicatat."}
-                    </span>
-                    <input
-                      id={fid}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      className="sr-only"
-                      onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                    />
-                  </label>
-                  <p role="alert" className="min-h-4 text-[13px] leading-4 text-text-soft">
-                    {tried && !file ? "Pilih berkas bukti transfer dulu." : ""}
+                  <p className="text-[14px] leading-[20px] text-text-muted">
+                    Menunggu pembayaran. Di produksi, PJP mengirim notifikasi (webhook) ke server Kainara begitu pembayaran masuk, dan Kainara memeriksa tanda tangannya sebelum mengubah status. Di demo ini tidak ada server, jadi tombol di bawah meniru notifikasi itu.
                   </p>
                   <div className="flex flex-wrap items-center gap-4">
                     <motion.button
-                      type="submit"
+                      type="button"
+                      onClick={simulate}
                       whileTap={{ scale: 0.98 }}
                       className="h-12 rounded-[2px] bg-brand px-7 text-[15px] font-medium text-surface transition-colors hover:bg-brand-hover"
                     >
-                      Kirim bukti transfer
+                      Simulasikan notifikasi PJP, pembayaran diterima
                     </motion.button>
                     <Link href="/pesanan-saya" className="text-[14px] font-medium text-brand underline underline-offset-4">
                       Bayar nanti, lihat pesanan saya
@@ -170,7 +147,7 @@ export default function BayarView() {
                 </>
               )}
             </section>
-          </form>
+          </div>
 
           <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24">
             <section className={`${panel} flex flex-col gap-4 p-[25px]`}>
@@ -229,7 +206,7 @@ export default function BayarView() {
           </aside>
         </div>
 
-        <p className="mt-10 text-[12px] text-text-muted">Nomor rekening dan angka adalah contoh demo untuk mock up. Tidak ada uang yang bergerak.</p>
+        <p className="mt-10 text-[12px] text-text-muted">Nomor virtual account dan angka adalah contoh demo untuk mock up. Tidak ada uang yang bergerak.</p>
       </div>
     </section>
   );

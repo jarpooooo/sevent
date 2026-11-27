@@ -4,7 +4,7 @@ import BayarView from "../../../../features/umkm/pesanan/BayarView";
 
 export const metadata: Metadata = {
   title: "Pesanan | Kainara",
-  description: "Transfer langsung ke pabrik dan unggah bukti. Demo, belum ada transaksi sungguhan.",
+  description: "Bayar lewat virtual account PJP. Demo, belum ada transaksi sungguhan.",
 };
 
 export default function Page() {

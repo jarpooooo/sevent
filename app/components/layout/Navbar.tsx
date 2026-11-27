@@ -23,13 +23,18 @@ const PABRIK_LINKS = [
   { href: "/kontak", label: "Kontak" },
 ];
 
+const ADMIN_LINKS = [
+  { href: "/admin", label: "Panel admin" },
+  { href: "/kontak", label: "Kontak" },
+];
+
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const role = useRole();
-  const links = role === "pabrik" ? PABRIK_LINKS : UMKM_LINKS;
+  const links = role === "pabrik" ? PABRIK_LINKS : role === "admin" ? ADMIN_LINKS : UMKM_LINKS;
   const account = useAccount();
 
   return (
@@ -83,10 +88,10 @@ export default function Navbar() {
               <span className="hidden whitespace-nowrap text-[13px] font-medium lg:block">{account.name}</span>
               <span
                 className={`hidden rounded-full px-2.5 py-[3px] text-[12px] font-medium leading-[15px] lg:block ${
-                  role === "pabrik" ? "bg-warn-soft text-text" : "bg-brand-soft text-brand"
+                  role === "pabrik" || role === "admin" ? "bg-warn-soft text-text" : "bg-brand-soft text-brand"
                 }`}
               >
-                {role === "pabrik" ? "Pabrik" : "UMKM"}
+                {role === "pabrik" ? "Pabrik" : role === "admin" ? "Admin" : "UMKM"}
               </span>
             </Link>
           ) : (
