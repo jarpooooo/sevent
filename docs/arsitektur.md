@@ -12,8 +12,9 @@ app/
     (publik)/   Beranda, Alur kerja, Kontak
     (umkm)/     Katalog, Detail lot, Checkout, Pesanan saya (bayar, berhasil, detail)
     (pabrik)/   Lot saya, Tambah lot, Pesanan masuk, Tagihan komisi
-    (akun)/     Profil
-    (admin)/    Panel admin (verifikasi akun, konfirmasi kurir)
+    (akun)/     Profil, Pratinjau dokumen (/dokumen)
+    (admin)/    Panel admin (verifikasi akun, konfirmasi kurir, dokumen)
+    (exim)/     Panel EXIM (Compliance Lock, klasifikasi, dokumen pengeluaran, fiskal)
     masuk/      Masuk dan daftar
   features/     Satu folder per area: publik, umkm, pabrik, admin, akun, auth
   components/   ui, mosaic, motion, layout (Navbar), brand
@@ -31,7 +32,8 @@ Route group `(publik)`, `(umkm)`, `(pabrik)`, `(admin)`, `(akun)` tidak muncul d
 ## Peran
 
 - **UMKM** dan **Pabrik**: bisa masuk dengan Google (peran disimpan di Firestore `users/{uid}`) atau akun demo.
-- **Admin**: hanya akun demo ("Masuk sebagai admin (demo)" di halaman Masuk). Memverifikasi akun dan meneruskan konfirmasi kurir.
+- **Admin** dan **EXIM**: hanya akun demo (tautan di halaman Masuk). Admin memverifikasi akun dan meneruskan konfirmasi kurir. EXIM memeriksa
+  persyaratan pengeluaran barang; hanya EXIM yang bisa menetapkan "Persyaratan terpenuhi".
 
 ## Alur pesanan (6 status)
 
@@ -51,9 +53,21 @@ Pesanan dibuat, Pembayaran berhasil, Barang dipersiapkan, Dikirim atau siap diam
 UMKM: identitas, bukti usaha (NIB opsional; boleh foto tempat produksi atau katalog), kebutuhan material, pemeriksaan admin.
 Pabrik: identitas, bukti usaha, pemeriksaan admin. Admin menyetujui atau meminta revisi dengan catatan.
 
+## Compliance Lock dan dokumen
+
+- Barang tidak boleh dikirim atau diambil hanya karena UMKM sudah membayar. Pabrik mengisi stock opname dan data kepabeanan lot, lalu "Tandai
+  disiapkan" mengirim pesanan ke EXIM (`statusPengeluaran`: draf, verifikasi, dokumen, ditahan, terpenuhi). Tombol kirim pabrik baru aktif setelah
+  EXIM menyatakan terpenuhi dan resi atau kode pickup terisi.
+- Tiga dokumen .docx (invoice, laporan kepabeanan, rekonsiliasi) dihasilkan dari satu sumber data: `app/lib/documents/` (specs, context, render),
+  template di `public/templates/`, peta placeholder di `docs/PLACEHOLDER.md`. Data kosong tertulis "Menunggu" atau "Belum diverifikasi", tidak pernah angka karangan.
+- **Pratinjau dan unduhan** (`/dokumen?id=&jenis=`): template .docx diisi lalu ditampilkan sebagai halaman (docx-preview). Unduh DOCX langsung dari berkas yang
+  diisi; Unduh PDF dibuat di browser (html2canvas-pro + jsPDF) dari halaman pratinjau, berupa gambar per halaman. Tombol "Pratinjau" ada di kartu Dokumen
+  tiap konteks: detail pesanan UMKM (invoice), detail pesanan pabrik, Periksa pesanan EXIM, dan panel admin.
+- Profil menyimpan data dokumen: NPWP, nomor izin KB, kantor pabean, rekening pencairan, jabatan, alamat kirim, detail usaha (`features/akun/profil.ts`).
+
 ## Belum ada
 
-Backend pesanan dan stok atomik, webhook PJP sungguhan, Compliance Lock dan tiga dokumen (invoice, laporan kepabeanan, rekonsiliasi stok),
+Backend pesanan dan stok atomik, webhook PJP sungguhan, form data kepabeanan di halaman Tambah lot (sekarang diisi dari detail pesanan),
 kelas pembeli (Fair Access), alur sengketa dan refund, Demand Pool, simulasi hasil bersih untuk pabrik.
 
 ## Perintah

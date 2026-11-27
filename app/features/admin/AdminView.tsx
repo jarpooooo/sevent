@@ -5,8 +5,8 @@ import { useState } from "react";
 import { Row, StatusPill, Table } from "../../components/ui/table";
 import { rupiah } from "../../lib/format";
 import { type Profil, saveProfil, useProfil } from "../akun/profil";
-import type { Role } from "../auth/session";
 import PabrikPage from "../pabrik/PabrikPage";
+import DokumenMenu from "../dokumen/DokumenMenu";
 import { advanceOrder, useOrders } from "../umkm/pesanan/orders";
 
 const WV = "minmax(0,150px) minmax(0,190px) minmax(0,1fr) 150px minmax(0,300px)";
@@ -14,7 +14,7 @@ const WK = "110px minmax(0,1fr) 120px minmax(0,1fr) 150px 220px";
 const btn =
   "h-10 rounded-[2px] border border-brand px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-soft";
 
-type Who = Exclude<Role, "admin">;
+type Who = "umkm" | "pabrik";
 const LABEL: Record<Who, string> = { umkm: "UMKM", pabrik: "Pabrik" };
 
 function stateOf(p: Profil | null | undefined) {
@@ -147,6 +147,23 @@ export default function AdminView() {
               </Row>
             ))}
           </Table>
+        )}
+      </section>
+
+      <section aria-label="Dokumen pesanan" className="flex flex-col gap-3">
+        <h2 className="text-[20px] font-medium leading-6">Dokumen pesanan</h2>
+        {orders.filter((o) => o.status >= 1).length === 0 ? (
+          <p className="rounded-[2px] border border-line bg-panel px-5 py-4 text-[14px] text-text-muted">
+            Dokumen muncul setelah ada pesanan yang sudah dibayar.
+          </p>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {orders
+              .filter((o) => o.status >= 1)
+              .map((o) => (
+                <DokumenMenu key={o.id} order={o} role="admin" title={`Pesanan #${o.id}`} />
+              ))}
+          </div>
         )}
       </section>
     </PabrikPage>

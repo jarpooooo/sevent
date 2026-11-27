@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import { Icon } from "../../components/ui/icons";
 import { inputBox, panel } from "../../components/ui/styles";
-import { LOT_TYPES, type LotType } from "../../lib/domain/types";
+import { LOT_TYPES, type LotCustoms, type LotType } from "../../lib/domain/types";
 import { num, rupiah } from "../../lib/format";
+import { customsComplete, EMPTY_CUSTOMS, saveLotCustoms } from "./lotdoc";
 import { addLot } from "./lots-store";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -71,6 +72,10 @@ export default function TambahLotView() {
   const [extra, setExtra] = useState<string | null>(null);
   const [checks, setChecks] = useState<boolean[]>([true, true, true, false]);
   const [sent, setSent] = useState(false);
+  // Data kepabeanan lot (opsional di sini; bisa dilengkapi lagi dari detail pesanan). Tidak ada isian bawaan.
+  const [kb, setKb] = useState<LotCustoms>(EMPTY_CUSTOMS);
+  const setK = <K extends keyof LotCustoms>(k: K, v: LotCustoms[K]) => setKb((p) => ({ ...p, [k]: v }));
+  const setKDok = (k: "jenis" | "nomor" | "tanggal", v: string) => setKb((p) => ({ ...p, dokPemasukan: { ...p.dokPemasukan, [k]: v } }));
 
   const tiles = Math.min(24, Math.max(1, Math.round(digits(berat) / TILE_KG)));
   const [lelangFrom, setLelangFrom] = useState(8);
@@ -91,7 +96,7 @@ export default function TambahLotView() {
   };
 
   const submit = () => {
-    addLot({
+    const created = addLot({
       name: bahan.trim() || "Lot baru",
       code: codeShort,
       channel: lelangKg > 0 && regionalKg > 0 ? "Regional dan lelang terbalik" : lelangKg > 0 ? "Lelang terbalik" : "Regional, tetap",
@@ -99,6 +104,7 @@ export default function TambahLotView() {
       stock: digits(berat) || tiles * TILE_KG,
       capacity: digits(berat) || tiles * TILE_KG,
     });
+    saveLotCustoms(created.id, kb);
     setSent(true);
     window.setTimeout(() => router.push("/lot-saya"), 1400);
   };
@@ -301,6 +307,74 @@ export default function TambahLotView() {
                 <p className="mt-2 text-[13px] text-text-muted">
                   1 ubin = {TILE_KG} kg. Regional {num(regionalKg)} kg, lelang terbalik {num(lelangKg)} kg.
                 </p>
+              </div>
+            </motion.section>
+
+            {/* Data kepabeanan */}
+            <motion.section variants={panelIn} aria-label="Data kepabeanan lot" className={`${panel} flex flex-col gap-5 p-[25px]`}>
+              <h2 className="text-[18px] font-medium">Data kepabeanan lot</h2>
+              <p className="text-[13px] text-text-muted">
+                Dipakai di laporan pendukung kepabeanan. Boleh dikosongkan dulu; EXIM mengonfirmasi, dan HS Code atau negara asal tidak pernah terisi otomatis.
+              </p>
+              <div>
+                <span className="block text-[12px] font-medium text-text-muted">Data minimal untuk dokumen</span>
+                <ul aria-label="Kelengkapan data minimal" className="mt-2 flex gap-1.5">
+                  {[
+                    ["HS Code", !!kb.hsCode.trim()],
+                    ["Negara asal", !!kb.negaraAsal.trim()],
+                    ["Asal bahan", !!kb.asalBahan],
+                  ].map(([t, ok], i) => (
+                    <motion.li
+                      key={t as string}
+                      className="flex flex-col gap-1.5"
+                      initial={{ opacity: 0, scale: 0.6 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.35, ease: EASE, delay: 0.5 + i * 0.05 }}
+                    >
+                      <span aria-hidden="true" className={`block h-7 w-[76px] rounded-[2px] transition-colors duration-300 ${ok ? "bg-brand" : "bg-brand-soft"}`} />
+                      <span className="text-[11px] text-text-muted">
+                        {t as string}
+                        <span className="sr-only">{ok ? ", terisi" : ", belum terisi"}</span>
+                      </span>
+                    </motion.li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-[13px] text-text-muted">
+                  {customsComplete(kb) ? "Data minimal lengkap." : "Tiga ubin hijau berarti HS Code, negara asal, dan asal bahan sudah diisi."}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="HS Code">
+                  <input className={inputBox} value={kb.hsCode} onChange={(e) => setK("hsCode", e.target.value)} aria-label="HS Code" inputMode="numeric" />
+                </Field>
+                <Field label="Negara asal">
+                  <input className={inputBox} value={kb.negaraAsal} onChange={(e) => setK("negaraAsal", e.target.value)} aria-label="Negara asal" />
+                </Field>
+                <Field label="Asal bahan">
+                  <select className={inputBox} value={kb.asalBahan} onChange={(e) => setK("asalBahan", e.target.value as LotCustoms["asalBahan"])} aria-label="Asal bahan">
+                    <option value="">Pilih</option>
+                    <option value="domestik">Domestik</option>
+                    <option value="impor">Impor</option>
+                  </select>
+                </Field>
+                <Field label="Jenis kemasan">
+                  <input className={inputBox} value={kb.kemasanJenis} onChange={(e) => setK("kemasanJenis", e.target.value)} aria-label="Jenis kemasan" placeholder="Contoh: karung" />
+                </Field>
+                <Field label="Jumlah kemasan">
+                  <input className={inputBox} value={kb.kemasanJumlah} onChange={(e) => setK("kemasanJumlah", e.target.value.replace(/\D/g, ""))} aria-label="Jumlah kemasan" inputMode="numeric" />
+                </Field>
+                <Field label="Berat kotor (kg)">
+                  <input className={inputBox} value={kb.beratKotor} onChange={(e) => setK("beratKotor", e.target.value)} aria-label="Berat kotor" inputMode="decimal" />
+                </Field>
+                <Field label="Dokumen pemasukan, jenis">
+                  <input className={inputBox} value={kb.dokPemasukan.jenis} onChange={(e) => setKDok("jenis", e.target.value)} aria-label="Jenis dokumen pemasukan" />
+                </Field>
+                <Field label="Nomor">
+                  <input className={inputBox} value={kb.dokPemasukan.nomor} onChange={(e) => setKDok("nomor", e.target.value)} aria-label="Nomor dokumen pemasukan" />
+                </Field>
+                <Field label="Tanggal">
+                  <input type="date" className={inputBox} value={kb.dokPemasukan.tanggal} onChange={(e) => setKDok("tanggal", e.target.value)} aria-label="Tanggal dokumen pemasukan" />
+                </Field>
               </div>
             </motion.section>
           </div>

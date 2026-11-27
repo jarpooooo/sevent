@@ -1,5 +1,7 @@
 "use client";
 
+import DokumenMenu from "../../dokumen/DokumenMenu";
+import { PENGELUARAN_LABEL } from "../../../lib/domain/types";
 import { etaOf } from "./eta";
 import { m as motion } from "motion/react";
 import Image from "next/image";
@@ -137,6 +139,7 @@ export default function DetailPesananView() {
                     k="Konfirmasi diterima"
                     v={`Oleh kurir ${o.courier ?? "(JNE atau J&T)"}, diteruskan ke panel admin`}
                   />
+                  {!demo && o.status < 3 && <Row k="Pengeluaran dari pabrik" v={PENGELUARAN_LABEL[o.statusPengeluaran ?? "draf"]} />}
                   {o.status < 4 && <Row k={eta.label} v={`${eta.range} (contoh demo)`} />}
                 </dl>
               </Card>
@@ -147,6 +150,7 @@ export default function DetailPesananView() {
                   <Row k="Jadwal" v="Disepakati dengan pabrik setelah barang siap" />
                   {o.buyer && <Row k="Penerima" v={`${o.buyer.person}, ${o.buyer.phone}`} />}
                   <Row k="Konfirmasi diterima" v="Oleh kamu, saat barang diambil dan dicek" />
+                  {!demo && o.status < 3 && <Row k="Pengeluaran dari pabrik" v={PENGELUARAN_LABEL[o.statusPengeluaran ?? "draf"]} />}
                   {o.status < 3 && <Row k={eta.label} v={`${eta.range} (contoh demo)`} />}
                   <Row k="Dokumen" v="Tunjukkan nomor pesanan dan identitas penerima" />
                 </dl>
@@ -229,6 +233,8 @@ export default function DetailPesananView() {
                 Dipesan {when(o.createdAt)}. Dibayar lewat virtual account PJP.{demo && " Contoh demo."}
               </p>
             </section>
+
+            <DokumenMenu order={o} role="umkm" />
 
             <div className="flex flex-col gap-2.5">
               {o.status === 3 && !demo && !kirim && (

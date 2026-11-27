@@ -36,7 +36,7 @@ function Checkout({ lot, initialQty, saved }: { lot: Lot; initialQty: number; sa
   const [person, setPerson] = useState(saved?.person || account?.name || "");
   const [business, setBusiness] = useState(saved?.business || account?.business || "");
   const [phone, setPhone] = useState(saved?.phone || account?.whatsapp || "");
-  const [address, setAddress] = useState(saved?.address || account?.address || "");
+  const [address, setAddress] = useState(saved?.alamatKirim || saved?.address || account?.address || "");
   const [tried, setTried] = useState(false);
 
   const subtotal = qty * price;
@@ -72,7 +72,18 @@ function Checkout({ lot, initialQty, saved }: { lot: Lot; initialQty: number; sa
       pickup,
       address: pickup === "kirim" ? address.trim() : undefined,
       courier: pickup === "kirim" ? courier : undefined,
-      buyer: { person: person.trim(), business: business.trim(), phone: phone.trim() },
+      sellerId: "pabrik",
+      // NIB tidak tampil di checkout; ikut tersimpan hanya agar invoice bisa mencetaknya bila ada
+      buyer: {
+        person: person.trim(),
+        business: business.trim(),
+        phone: phone.trim(),
+        email: saved?.email || account?.email || undefined,
+        npwp: saved?.npwp || undefined,
+        nib: saved?.nib || account?.nib || undefined,
+        alamatUsaha:
+          [saved?.address || account?.address, saved?.kota, saved?.provinsi].filter(Boolean).join(", ") || undefined,
+      },
       model: lot.model,
       category: lot.category,
       lotType: lot.lotType,

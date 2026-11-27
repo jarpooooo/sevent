@@ -74,9 +74,10 @@ export const useOrders = () => useSyncExternalStore(subscribe, read, () => EMPTY
 export function addOrder(o: Omit<Order, "id" | "status" | "createdAt">): Order {
   const order: Order = {
     ...o,
-    id: `CL-${Date.now().toString(36).toUpperCase().slice(-6)}`,
+    id: `KN-${Date.now().toString(36).toUpperCase().slice(-6)}`,
     va: `8077${Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("")}`,
     status: 0,
+    statusPengeluaran: "draf",
     createdAt: new Date().toISOString(),
   };
   write([order, ...read()]);
@@ -102,6 +103,11 @@ export function useAvailable(slug: string, stock: number) {
 }
 
 export const useOrder = (id: string | null) => useOrders().find((o) => o.id === id);
+
+/** Ubah sebagian isi pesanan (data dokumen, status pengeluaran). Tidak mengubah status 6 tahap. */
+export function patchOrder(id: string, patch: Partial<Order>) {
+  write(read().map((o) => (o.id === id ? { ...o, ...patch } : o)));
+}
 
 /** Yang mengonfirmasi barang diterima: UMKM bila ambil sendiri, kurir eksternal (JNE atau J&T) bila diantar. */
 export const receiverOf = (pickup: Pickup): "umkm" | "kurir" => (pickup === "ambil" ? "umkm" : "kurir");

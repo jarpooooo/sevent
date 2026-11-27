@@ -1,18 +1,16 @@
 "use client";
 
-import { m as motion } from "motion/react";
-import { advanceOrder } from "../umkm/pesanan/orders";
+import Link from "next/link";
+import { PENGELUARAN_LABEL, type PengeluaranStatus } from "../../lib/domain/types";
 import { num, rupiah } from "../../lib/format";
 import { type Incoming, STATUS_LABEL, useIncoming } from "./incoming";
 import { Row, StatusPill, Table } from "../../components/ui/table";
 import PabrikPage from "./PabrikPage";
 
-const W = "110px minmax(0,190px) minmax(0,1fr) 110px 130px 170px minmax(0,190px)";
+const W = "100px 140px minmax(0,1fr) 90px 110px 160px 170px minmax(0,180px)";
 
 const tone = (s: Incoming["status"]) => (s === 0 ? "wait" : s === 5 ? "idle" : "ok");
-
-const NEXT = (o: Incoming) =>
-  [null, "Tandai disiapkan", o.pickup === "ambil" ? "Tandai siap diambil" : "Tandai dikirim"][o.status];
+const lockTone = (l: PengeluaranStatus) => (l === "terpenuhi" ? "ok" : l === "draf" ? "idle" : "wait");
 
 function Action({ o }: { o: Incoming }) {
   if (o.status === 5) return <span className="text-[13px] text-text-muted">Komisi 2% masuk tagihan</span>;
@@ -27,14 +25,12 @@ function Action({ o }: { o: Incoming }) {
   if (o.status === 0) return <span className="text-[13px] text-text-muted">Menunggu pembayaran PJP</span>;
   if (!o.live) return null;
   return (
-    <motion.button
-      type="button"
-      whileTap={{ scale: 0.97 }}
-      onClick={() => advanceOrder(o.id)}
-      className="h-10 rounded-[2px] border border-brand px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-soft"
+    <Link
+      href={`/pesanan-masuk/detail?id=${encodeURIComponent(o.id)}`}
+      className="inline-flex h-10 items-center rounded-[2px] border border-brand px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-soft"
     >
-      {NEXT(o)}
-    </motion.button>
+      {o.status === 1 ? "Siapkan pesanan" : o.pickup === "ambil" ? "Kelola, siap diambil" : "Kelola, kirim"}
+    </Link>
   );
 }
 
@@ -57,7 +53,7 @@ export default function PesananMasukView() {
       )}
       <Table
         label="Tabel pesanan masuk"
-        head={["Pesanan", "Pembeli", "Lot", "Jumlah", "Total", "Status", "Tindakan"]}
+        head={["Pesanan", "Pembeli", "Lot", "Jumlah", "Total", "Status", "Pengeluaran", "Tindakan"]}
         widths={W}
       >
         {rows.map((o) => (
@@ -71,6 +67,9 @@ export default function PesananMasukView() {
             <span className="tabular-nums">{rupiah(o.total)}</span>
             <span>
               <StatusPill tone={tone(o.status)}>{STATUS_LABEL(o.status, o.pickup)}</StatusPill>
+            </span>
+            <span>
+              {o.lock ? <StatusPill tone={lockTone(o.lock)}>{PENGELUARAN_LABEL[o.lock]}</StatusPill> : <span className="text-[13px] text-text-muted">-</span>}
             </span>
             <span>
               <Action o={o} />

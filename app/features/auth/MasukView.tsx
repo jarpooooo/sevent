@@ -84,6 +84,12 @@ export default function MasukView() {
     router.push("/admin");
   };
 
+  // EXIM pabrik: memeriksa persyaratan pengeluaran barang. Juga hanya akun demo.
+  const signInExim = () => {
+    login("exim", { provider: "demo" });
+    router.push("/exim");
+  };
+
   // Login Google sungguhan (Firebase Auth + Firestore users/{uid}).
   const signInGoogle = async () => {
     setBusy(true);
@@ -296,14 +302,24 @@ export default function MasukView() {
               >
                 Masuk dengan akun demo ({role === "pabrik" ? "Pabrik Contoh" : "Sari Jahit"})
               </motion.button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={signInAdmin}
-                className="self-start text-[13px] font-medium text-brand underline underline-offset-4 hover:text-brand-hover"
-              >
-                Masuk sebagai admin (demo)
-              </button>
+              <div className="flex flex-wrap gap-x-5 gap-y-1">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={signInAdmin}
+                  className="text-[13px] font-medium text-brand underline underline-offset-4 hover:text-brand-hover"
+                >
+                  Masuk sebagai admin (demo)
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={signInExim}
+                  className="text-[13px] font-medium text-brand underline underline-offset-4 hover:text-brand-hover"
+                >
+                  Masuk sebagai EXIM (demo)
+                </button>
+              </div>
             </form>
           ) : (
             <p className="text-[14px] leading-[22px] text-text-muted">

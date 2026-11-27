@@ -4,7 +4,7 @@ import { AnimatePresence, m as motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useAccount, useRole } from "../../features/auth/session";
+import { ROLE_LABEL, useAccount, useRole } from "../../features/auth/session";
 import { KainaraWordmark } from "../brand/KainaraLogo";
 import UserAvatar from "../ui/UserAvatar";
 
@@ -28,13 +28,18 @@ const ADMIN_LINKS = [
   { href: "/kontak", label: "Kontak" },
 ];
 
+const EXIM_LINKS = [
+  { href: "/exim", label: "Panel EXIM" },
+  { href: "/kontak", label: "Kontak" },
+];
+
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const role = useRole();
-  const links = role === "pabrik" ? PABRIK_LINKS : role === "admin" ? ADMIN_LINKS : UMKM_LINKS;
+  const links = role === "pabrik" ? PABRIK_LINKS : role === "admin" ? ADMIN_LINKS : role === "exim" ? EXIM_LINKS : UMKM_LINKS;
   const account = useAccount();
 
   return (
@@ -88,10 +93,10 @@ export default function Navbar() {
               <span className="hidden whitespace-nowrap text-[13px] font-medium lg:block">{account.name}</span>
               <span
                 className={`hidden rounded-full px-2.5 py-[3px] text-[12px] font-medium leading-[15px] lg:block ${
-                  role === "pabrik" || role === "admin" ? "bg-warn-soft text-text" : "bg-brand-soft text-brand"
+                  role && role !== "umkm" ? "bg-warn-soft text-text" : "bg-brand-soft text-brand"
                 }`}
               >
-                {role === "pabrik" ? "Pabrik" : role === "admin" ? "Admin" : "UMKM"}
+                {role ? ROLE_LABEL[role] : "UMKM"}
               </span>
             </Link>
           ) : (

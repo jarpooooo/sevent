@@ -65,6 +65,8 @@ export type Lot = {
     kontaminasi: string;
   };
   notes: string;
+  /** pabrik pemilik lot (demo: satu pabrik, id "pabrik"); dipakai agar dokumen memakai profil pabrik yang benar */
+  ownerId?: string;
   reviews?: { average: number; counts: [number, number, number, number, number]; items: Review[] };
 };
 
@@ -73,8 +75,51 @@ export const BUY_MODEL_LABEL: Record<BuyModel, string> = {
   lelang: "Lelang terbalik",
 };
 
+/** Dokumen pemasukan atau pengeluaran: jenis, nomor, tanggal. Diisi hanya bila ada; tidak ada isian bawaan. */
+export type DokRef = { jenis: string; nomor: string; tanggal: string };
+
+/**
+ * Data kepabeanan per lot. Diisi pabrik, dikonfirmasi EXIM. Kosong berarti belum diisi dan dokumen
+ * menandainya "menunggu"; HS Code, negara asal, dan nomor dokumen tidak pernah diisi otomatis.
+ */
+export type LotCustoms = {
+  hsCode: string;
+  negaraAsal: string;
+  asalBahan: "" | "impor" | "domestik";
+  kemasanJenis: string;
+  kemasanJumlah: string;
+  /** berat kotor dalam satuan lot, angka */
+  beratKotor: string;
+  dokPemasukan: DokRef;
+};
+
+/** Status pengeluaran barang (Compliance Lock). Hanya EXIM yang boleh menetapkan "terpenuhi". */
+export type PengeluaranStatus = "draf" | "verifikasi" | "dokumen" | "ditahan" | "terpenuhi";
+export const PENGELUARAN_LABEL: Record<PengeluaranStatus, string> = {
+  draf: "Draf",
+  verifikasi: "Menunggu verifikasi EXIM",
+  dokumen: "Menunggu dokumen",
+  ditahan: "Ditahan",
+  terpenuhi: "Persyaratan terpenuhi",
+};
+
+/** Komponen kewajiban fiskal pada lembar rekonsiliasi. */
+export type FiskalKey = "pabean" | "bm" | "ppnImpor" | "pph22" | "ppnbm" | "cukai" | "ppnDom";
+export const FISKAL_LABEL: Record<FiskalKey, string> = {
+  pabean: "Nilai pabean / dasar nilai",
+  bm: "Bea Masuk (BM)",
+  ppnImpor: "PPN impor",
+  pph22: "PPh Pasal 22 impor",
+  ppnbm: "PPnBM impor",
+  cukai: "Cukai / pungutan lain",
+  ppnDom: "PPN penyerahan domestik",
+};
+/** "belum" = belum diverifikasi. Itu BUKAN nihil: nominalnya tidak boleh dianggap Rp0. */
+export type FiskalStatus = "belum" | "berlaku" | "dikecualikan" | "tidakBerlaku";
+export type FiskalRow = { status: FiskalStatus; dasar: string; tarif: string; nominal: string };
+
 /** Peran pengguna dan status pesanan dipakai bersama oleh klien dan server. */
-export type Role = "umkm" | "pabrik";
+export type Role = "umkm" | "pabrik" | "admin" | "exim";
 export type Courier = "JNE" | "J&T";
 export type Pickup = "ambil" | "kirim";
 /**
@@ -94,8 +139,19 @@ export type Order = {
   price: number;
   pickup: Pickup;
   address?: string;
-  /** data penerima saat checkout (NIB tidak ikut) */
-  buyer?: { person: string; business: string; phone: string };
+  /** data penerima saat checkout (NIB tidak tampil di checkout, tapi ikut tersimpan untuk invoice bila ada) */
+  buyer?: {
+    person: string;
+    business: string;
+    phone: string;
+    email?: string;
+    npwp?: string;
+    nib?: string;
+    /** alamat usaha (alamat kirim ada di `address`) */
+    alamatUsaha?: string;
+  };
+  /** pabrik penjual */
+  sellerId?: string;
   status: OrderStatus;
   createdAt: string;
   model: BuyModel;
@@ -110,9 +166,30 @@ export type Order = {
   /** nomor virtual account contoh dari PJP (simulasi, tidak ada uang bergerak) */
   va?: string;
   paidAt?: string;
-  /** siapa yang mengonfirmasi barang diterima: UMKM (ambil sendiri) atau kurir eksternal (diantar) */
   /** kurir eksternal pilihan UMKM saat checkout (hanya bila diantar) */
   courier?: Courier;
+  /** siapa yang mengonfirmasi barang diterima: UMKM (ambil sendiri) atau kurir eksternal (diantar) */
   receivedBy?: "umkm" | "kurir";
   receivedAt?: string;
+
+  /* ---- data dokumen: diisi pabrik, EXIM, atau admin sesuai tahap ---- */
+  /** nomor resi (diantar) atau kode pickup (ambil sendiri), diisi pabrik saat status 3 */
+  resi?: string;
+  /** tanggal stock opname dan stok fisik hasil pemeriksaan, diisi pabrik saat status 2 */
+  tglOpname?: string;
+  stokFisik?: string;
+  refItInventory?: string;
+  /** Compliance Lock */
+  statusPengeluaran?: PengeluaranStatus;
+  /** hasil klasifikasi EXIM, mis. perca pemotongan, sisa bahan baku, produk reject */
+  kategoriMaterial?: string;
+  dokPengeluaran?: DokRef;
+  persetujuanPengeluaran?: string;
+  refLaporanFiskal?: string;
+  refFakturPajak?: string;
+  kodeBilling?: string;
+  ntpn?: string;
+  dasarFasilitas?: string;
+  fiskal?: Partial<Record<FiskalKey, FiskalRow>>;
+  catatanExim?: string;
 };

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { commission } from "../../lib/domain/pricing";
+import type { PengeluaranStatus } from "../../lib/domain/types";
 import { type Order, useOrders } from "../umkm/pesanan/orders";
 
 export { commission };
@@ -22,11 +23,13 @@ export type Incoming = {
   status: Order["status"];
   /** true = berasal dari checkout di browser ini, status bisa dimajukan pabrik */
   live: boolean;
+  /** status pengeluaran barang (Compliance Lock); hanya untuk pesanan live */
+  lock?: PengeluaranStatus;
 };
 
 const SEED: Incoming[] = [
   {
-    id: "CL-0192",
+    id: "KN-0192",
     buyer: "Sari Jahit, Bantul",
     lot: "Offcut denim polos",
     unit: "kg",
@@ -37,7 +40,7 @@ const SEED: Incoming[] = [
     live: false,
   },
   {
-    id: "CL-0187",
+    id: "KN-0187",
     buyer: "Kriya B, Sleman",
     lot: "Offcut denim polos",
     unit: "kg",
@@ -52,7 +55,7 @@ const SEED: Incoming[] = [
 const fromOrder = (o: Order): Incoming => ({
   id: o.id,
   slug: o.slug,
-  buyer: "Sari Jahit, Bantul",
+  buyer: o.buyer ? (o.buyer.business || o.buyer.person) : "Sari Jahit, Bantul",
   lot: o.title,
   unit: o.unit,
   qty: o.qty,
@@ -60,6 +63,7 @@ const fromOrder = (o: Order): Incoming => ({
   pickup: o.pickup,
   status: o.status,
   live: true,
+  lock: o.statusPengeluaran ?? "draf",
 });
 
 export function useIncoming(): Incoming[] {
