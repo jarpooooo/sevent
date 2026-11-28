@@ -119,7 +119,7 @@ export type FiskalStatus = "belum" | "berlaku" | "dikecualikan" | "tidakBerlaku"
 export type FiskalRow = { status: FiskalStatus; dasar: string; tarif: string; nominal: string };
 
 /** Peran pengguna dan status pesanan dipakai bersama oleh klien dan server. */
-export type Role = "umkm" | "pabrik" | "admin" | "exim";
+export type Role = "umkm" | "pabrik" | "admin";
 export type Courier = "JNE" | "J&T";
 export type Pickup = "ambil" | "kirim";
 /**

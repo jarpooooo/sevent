@@ -1,5 +1,6 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { m as motion } from "motion/react";
 import type { ReactNode } from "react";
 import { useSafeReducedMotion } from "../../components/motion/useSafeReducedMotion";
@@ -51,6 +52,7 @@ export function Section({
   done,
   total,
   seed = 1,
+  icon: Icon,
   aside,
   children,
 }: {
@@ -61,6 +63,7 @@ export function Section({
   done?: number;
   total?: number;
   seed?: number;
+  icon?: LucideIcon;
   aside?: ReactNode;
   children: ReactNode;
 }) {
@@ -76,7 +79,13 @@ export function Section({
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="flex items-start gap-4">
-        {total !== undefined && done !== undefined && <Glyph done={done} total={total} seed={seed} size={9} />}
+        {Icon ? (
+          <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-[2px] bg-brand-soft text-brand">
+            <Icon className="size-5" strokeWidth={1.8} />
+          </span>
+        ) : (
+          total !== undefined && done !== undefined && <Glyph done={done} total={total} seed={seed} size={9} />
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h2 className="font-display text-[22px] leading-[1.15] tracking-[-0.02em]">{title}</h2>
           {desc && <p className="max-w-[620px] text-[13px] leading-5 text-text-muted">{desc}</p>}

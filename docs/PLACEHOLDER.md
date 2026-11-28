@@ -57,14 +57,14 @@ Nilainya disusun di `app/lib/documents/context.ts`, diisi ke template oleh `app/
 | `nomor_izin_kb`, `kantor_pabean` | Profil pabrik: `pabrik.nomorIzinKB`, `pabrik.kantorPabean` | Menunggu, diisi pabrik |
 | `penerima_nama/alamat/identitas` | `Order.buyer`, `Order.address` | Menunggu |
 | `uraian_kode_lot`, `jumlah_satuan`, `nilai_barang` | Lot, `Order` | selalu ada |
-| `kategori` | `Order.kategoriMaterial` (EXIM) | Menunggu: klasifikasi EXIM |
+| `kategori` | `Order.kategoriMaterial` (EXIM); tanpa itu, usulan dari kategori lot (Cutting offcuts, Perca = Perca pemotongan; Sisa gulungan = Sisa bahan baku) | Usulan: ..., menunggu konfirmasi EXIM |
 | `komposisi_asal` | `Lot.spec.komposisi` + `LotCustoms.asalBahan` | Menunggu: asal bahan |
-| `hs_code_negara` | `LotCustoms.hsCode`, `negaraAsal` | Menunggu |
+| `hs_code_negara` | `LotCustoms.hsCode`, `negaraAsal` (kosong dan asal bahan domestik: Indonesia) | Menunggu |
 | `berat` | berat bersih = qty; `LotCustoms.beratKotor` | Menunggu: berat kotor |
 | `kemasan` | `LotCustoms.kemasanJenis`, `kemasanJumlah` | Menunggu |
 | `dok_pemasukan` | `LotCustoms.dokPemasukan` | Menunggu |
 | `dok_pengeluaran`, `persetujuan_pengeluaran` | `Order.dokPengeluaran`, `persetujuanPengeluaran` (EXIM) | Menunggu |
-| `ref_laporan_fiskal` | `Order.refLaporanFiskal` | Belum diverifikasi |
+| `ref_laporan_fiskal` | `Order.refLaporanFiskal`; bawaan: nomor lembar rekonsiliasi `LPK-<pesanan>` | LPK-... |
 | `cb_draf`, `cb_verifikasi`, `cb_dokumen`, `cb_ditahan`, `cb_terpenuhi` | `Order.statusPengeluaran` (Compliance Lock) | satu kotak terisi |
 | `ttd_penyiap_nama` | Profil pabrik: `person` | Menunggu |
 | `ttd_exim_nama/jabatan` | Profil EXIM: `person`, `jabatan` | Menunggu |
@@ -75,6 +75,7 @@ Nilainya disusun di `app/lib/documents/context.ts`, diisi ke template oleh `app/
 |---|---|---|
 | `nomor_laporan`, `periode`, `nomor_invoice_order`, `kode_lot`, `perusahaan_nama`, `tanggal_rekon` | pesanan, profil pabrik | |
 | `pabean_*`, `bm_*`, `ppn_impor_*`, `pph22_*`, `ppnbm_*`, `cukai_*`, `ppn_dom_*` (`dasar`, `tarif`, `nominal`) | `Order.fiskal[...]` (EXIM) | Belum diverifikasi, bukan Rp0 |
+| `pabean_dasar` (status belum) | nilai transaksi pesanan, ditandai "usulan, belum diverifikasi"; tarif dan nominal tetap "Belum diverifikasi" | |
 | | status "Dikecualikan": dasar hukum dicatat, tarif dan nominal "-" | |
 | | status "Tidak berlaku": "Tidak berlaku" | |
 | `dasar_fasilitas`, `ref_faktur_pajak`, `kode_billing`, `ntpn` | `Order` (EXIM) | Belum diverifikasi |

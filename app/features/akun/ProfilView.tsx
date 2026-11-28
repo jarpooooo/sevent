@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { panel } from "../../components/ui/styles";
@@ -14,10 +15,6 @@ const NOTIFS: Record<Role, { t: string; d: string; when: string; unread: boolean
     { t: "Pembayaran #KN-0192 berhasil", d: "Pabrik menyiapkan lotmu.", when: "Kemarin", unread: true },
     { t: "Lelang LL-007 berakhir", d: "Kamu belum mengambil lot ini.", when: "2 hari lalu", unread: false },
   ],
-  exim: [
-    { t: "Pesanan menunggu verifikasi", d: "Periksa klasifikasi dan dokumen pengeluaran.", when: "Baru", unread: true },
-    { t: "Dokumen pengeluaran diminta", d: "Pabrik diminta melengkapi dokumen pemasukan.", when: "Kemarin", unread: false },
-  ],
   admin: [
     { t: "Verifikasi menunggu", d: "Ada akun yang menunggu pemeriksaan di Panel admin.", when: "Baru", unread: true },
     { t: "Konfirmasi kurir menunggu", d: "Paket terkirim perlu dikonfirmasi lewat kurir.", when: "Kemarin", unread: false },
@@ -25,6 +22,7 @@ const NOTIFS: Record<Role, { t: string; d: string; when: string; unread: boolean
   pabrik: [
     { t: "Pesanan #KN-0192 masuk", d: "Siapkan lot Offcut denim polos.", when: "Baru", unread: true },
     { t: "Lot Offcut denim polos tayang", d: "Terlihat oleh UMKM di provinsimu.", when: "Kemarin", unread: true },
+    { t: "Pesanan menunggu pemeriksaan EXIM", d: "Buka menu Pemeriksaan EXIM untuk melanjutkan.", when: "Baru", unread: true },
     { t: "Pembayaran #KN-0187 masuk", d: "PJP mengabari, siapkan barang.", when: "2 hari lalu", unread: false },
   ],
 };
@@ -34,7 +32,10 @@ function Notifikasi({ role }: { role: Role }) {
   return (
     <section aria-label="Notifikasi" className={`${panel} overflow-hidden`}>
       <div className="flex items-center justify-between px-6 py-5">
-        <h2 className="text-[18px] font-medium">Notifikasi</h2>
+        <h2 className="flex items-center gap-2.5 text-[18px] font-medium">
+          <Bell aria-hidden="true" className="size-[18px] text-brand" strokeWidth={1.8} />
+          Notifikasi
+        </h2>
         <button
           type="button"
           onClick={() => setItems((l) => l.map((n) => ({ ...n, unread: false })))}
@@ -43,7 +44,7 @@ function Notifikasi({ role }: { role: Role }) {
           Tandai terbaca
         </button>
       </div>
-      <ul>
+      <ul role="region" aria-label="Daftar notifikasi" tabIndex={0} className="max-h-[320px] overflow-y-auto overscroll-contain">
         {items.map((n) => (
           <li key={n.t} className="flex items-start gap-3 border-t border-border px-6 py-4">
             <span

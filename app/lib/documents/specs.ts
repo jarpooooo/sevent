@@ -25,7 +25,7 @@ export const DOC_SPECS: Record<DocKind, DocSpec> = {
     template: "invoice-komersial.docx",
     prefix: "invoice",
     desc: "Siapa membeli apa, berapa jumlahnya, dan berapa tagihannya.",
-    roles: ["umkm", "pabrik", "admin", "exim"],
+    roles: ["umkm", "pabrik", "admin"],
   },
   laporan: {
     kind: "laporan",
@@ -33,7 +33,7 @@ export const DOC_SPECS: Record<DocKind, DocSpec> = {
     template: "laporan-pendukung-kepabeanan.docx",
     prefix: "laporan-kepabeanan",
     desc: "Asal barang, klasifikasi, dan status persyaratan pengeluaran.",
-    roles: ["pabrik", "admin", "exim"],
+    roles: ["pabrik", "admin"],
   },
   rekon: {
     kind: "rekon",
@@ -41,7 +41,7 @@ export const DOC_SPECS: Record<DocKind, DocSpec> = {
     template: "rekonsiliasi-fiskal-stok.docx",
     prefix: "rekonsiliasi",
     desc: "Kewajiban fiskal dan kecocokan stok sistem dengan stok fisik.",
-    roles: ["pabrik", "admin", "exim"],
+    roles: ["pabrik", "admin"],
   },
 };
 

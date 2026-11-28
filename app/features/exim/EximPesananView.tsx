@@ -1,6 +1,8 @@
 "use client";
 
 import { m as motion } from "motion/react";
+import { Landmark, Package, Scale, Tags } from "lucide-react";
+import Title from "../pabrik/Title";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
@@ -20,7 +22,7 @@ import { num, rupiah } from "../../lib/format";
 import { Field, Grid, Select } from "../akun/FormParts";
 import DokumenMenu from "../dokumen/DokumenMenu";
 import LotCustomsForm from "../pabrik/LotCustomsForm";
-import { customsComplete, EMPTY_CUSTOMS, useLotCustomsStore } from "../pabrik/lotdoc";
+import { customsComplete, customsOf, useLotCustomsStore } from "../pabrik/lotdoc";
 import PabrikPage from "../pabrik/PabrikPage";
 import { FiskalTiles, LockTiles, LotThumb } from "../pabrik/tiles";
 import { patchOrder, useOrder } from "../umkm/pesanan/orders";
@@ -38,6 +40,8 @@ const FISKAL_STATUS = [
   { v: "tidakBerlaku", t: "Tidak berlaku" },
 ];
 const KEYS = Object.keys(FISKAL_LABEL) as FiskalKey[];
+/** Usulan klasifikasi dari kategori lot. Bukan keputusan: EXIM yang menetapkan. */
+const KATEGORI_USUL: Record<string, string> = { "Cutting offcuts": "Perca pemotongan", Perca: "Perca pemotongan", "Sisa gulungan": "Sisa bahan baku" };
 const EMPTY_DOK: DokRef = { jenis: "", nomor: "", tanggal: "" };
 const blankRow = (): FiskalRow => ({ status: "belum", dasar: "", tarif: "", nominal: "" });
 
@@ -50,20 +54,23 @@ function Review({ o }: { o: Order }) {
   const id = useId();
   const fid = (k: string) => `${id}-${k}`;
   const store = useLotCustomsStore();
-  const customs = { ...EMPTY_CUSTOMS, ...store[o.slug] };
+  const customs = customsOf(store, o.slug);
   const lot = LOTS.find((l) => l.slug === o.slug);
   const lock = o.statusPengeluaran ?? "draf";
 
-  const [kategori, setKategori] = useState(o.kategoriMaterial ?? "");
+  const usulKategori = lot ? (KATEGORI_USUL[lot.category] ?? "") : "";
+  const usulLapFiskal = `LPK-${o.id}`;
+  const usulDasar = `Nilai transaksi ${rupiah(o.qty * o.price)}`;
+  const [kategori, setKategori] = useState(o.kategoriMaterial ?? usulKategori);
   const [dok, setDok] = useState<DokRef>({ ...EMPTY_DOK, ...o.dokPengeluaran });
   const [setuju, setSetuju] = useState(o.persetujuanPengeluaran ?? "");
-  const [lapFiskal, setLapFiskal] = useState(o.refLaporanFiskal ?? "");
+  const [lapFiskal, setLapFiskal] = useState(o.refLaporanFiskal ?? usulLapFiskal);
   const [faktur, setFaktur] = useState(o.refFakturPajak ?? "");
   const [billing, setBilling] = useState(o.kodeBilling ?? "");
   const [ntpn, setNtpn] = useState(o.ntpn ?? "");
   const [fasilitas, setFasilitas] = useState(o.dasarFasilitas ?? "");
   const [fiskal, setFiskal] = useState<Record<FiskalKey, FiskalRow>>(() =>
-    Object.fromEntries(KEYS.map((k) => [k, { ...blankRow(), ...o.fiskal?.[k] }])) as Record<FiskalKey, FiskalRow>,
+    Object.fromEntries(KEYS.map((k) => [k, { ...blankRow(), ...(k === "pabean" ? { dasar: usulDasar } : {}), ...o.fiskal?.[k] }])) as Record<FiskalKey, FiskalRow>,
   );
   const [catatan, setCatatan] = useState(o.catatanExim ?? "");
   const [note, setNote] = useState("");
@@ -122,13 +129,13 @@ function Review({ o }: { o: Order }) {
       note="Demo. Platform hanya mencatat referensi: tidak menerbitkan kode billing, NTPN, atau Faktur Pajak resmi, dan tidak menggantikan persetujuan Bea Cukai."
       action={<StatusPill tone={lockTone(lock)}>{PENGELUARAN_LABEL[lock]}</StatusPill>}
     >
-      <Link href="/exim" className="-mt-4 text-[13px] font-medium text-brand underline underline-offset-4">
-        Kembali ke panel EXIM
+      <Link href="/pemeriksaan-exim" className="-mt-4 text-[13px] font-medium text-brand underline underline-offset-4">
+        Kembali ke pemeriksaan EXIM
       </Link>
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_444px]">
         <div className="flex min-w-0 flex-col gap-6">
           <section aria-label="Ringkasan" className={`${panel} flex flex-col gap-3 p-[25px]`}>
-            <h2 className="text-[18px] font-medium leading-[22px]">Ringkasan</h2>
+            <Title icon={Package}>Ringkasan</Title>
             <div className="flex gap-4">
               <LotThumb lot={lot} seed={5} />
               <p className="text-[13px] leading-5 text-text-muted">
@@ -153,9 +160,9 @@ function Review({ o }: { o: Order }) {
           </section>
 
           <section aria-label="Klasifikasi dan dokumen pengeluaran" className={`${panel} flex flex-col gap-5 p-[25px]`}>
-            <h2 className="text-[18px] font-medium leading-[22px]">Klasifikasi dan dokumen pengeluaran</h2>
+            <Title icon={Tags}>Klasifikasi dan dokumen pengeluaran</Title>
             <Grid>
-              <Field label="Kategori material (klasifikasi EXIM)" hint="Tidak semua sisa tekstil sama dengan limbah." htmlFor={fid("kat")} className="sm:col-span-2">
+              <Field label="Kategori material (klasifikasi EXIM)" hint={!o.kategoriMaterial && kategori === usulKategori && usulKategori ? "Usulan dari kategori lot. Konfirmasi atau ganti; tidak semua sisa tekstil sama dengan limbah." : "Tidak semua sisa tekstil sama dengan limbah."} htmlFor={fid("kat")} className="sm:col-span-2">
                 <Select id={fid("kat")} value={kategori} onChange={setKategori} options={KATEGORI} placeholder="Pilih kategori" />
               </Field>
               <Field label="Jenis dokumen pengeluaran" htmlFor={fid("dokJenis")}>
@@ -170,7 +177,7 @@ function Review({ o }: { o: Order }) {
               <Field label="Referensi persetujuan pengeluaran" htmlFor={fid("setuju")}>
                 <input id={fid("setuju")} className={inputBox} value={setuju} onChange={(e) => setSetuju(e.target.value)} />
               </Field>
-              <Field label="Referensi laporan fiskal" htmlFor={fid("lap")} className="sm:col-span-2">
+              <Field label="Referensi laporan fiskal" hint={!o.refLaporanFiskal && lapFiskal === usulLapFiskal ? "Usulan: nomor lembar rekonsiliasi Kainara untuk pesanan ini." : undefined} htmlFor={fid("lap")} className="sm:col-span-2">
                 <input id={fid("lap")} className={inputBox} value={lapFiskal} onChange={(e) => setLapFiskal(e.target.value)} />
               </Field>
             </Grid>
@@ -180,7 +187,7 @@ function Review({ o }: { o: Order }) {
 
           <section aria-label="Kewajiban fiskal" className={`${panel} flex flex-col gap-5 p-[25px]`}>
             <div className="flex flex-col gap-1">
-              <h2 className="text-[18px] font-medium leading-[22px]">Kewajiban fiskal</h2>
+              <Title icon={Landmark}>Kewajiban fiskal</Title>
               <p className="max-w-[640px] text-[13px] leading-5 text-text-muted">
                 Tentukan status tiap komponen. Berlaku: isi dasar, tarif, dan nominal. Dikecualikan: catat dasar hukumnya. &quot;Belum diverifikasi&quot;
                 tidak sama dengan Rp0 dan menahan status &quot;Persyaratan terpenuhi&quot;.
@@ -196,6 +203,9 @@ function Review({ o }: { o: Order }) {
                       <p className="text-[14px] font-medium">{FISKAL_LABEL[k]}</p>
                       <Select id={fid(`f-${k}`)} value={r.status} onChange={(v) => setRow(k, { status: v as FiskalStatus })} options={FISKAL_STATUS} />
                     </div>
+                    {k === "pabean" && r.status === "belum" && (
+                      <input aria-label="Nilai pabean, dasar nilai (usulan)" className={inputBox} value={r.dasar} onChange={(e) => setRow(k, { dasar: e.target.value })} />
+                    )}
                     {(r.status === "berlaku" || r.status === "dikecualikan") && (
                       <div className={`grid gap-3 ${r.status === "berlaku" ? "sm:grid-cols-3" : ""}`}>
                         <input aria-label={`${FISKAL_LABEL[k]}, ${r.status === "berlaku" ? "dasar pengenaan" : "dasar hukum pengecualian"}`} className={inputBox} placeholder={r.status === "berlaku" ? "Dasar pengenaan" : "Dasar hukum pengecualian"} value={r.dasar} onChange={(e) => setRow(k, { dasar: e.target.value })} />
@@ -230,7 +240,7 @@ function Review({ o }: { o: Order }) {
 
         <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24">
           <section aria-label="Keputusan EXIM" className={`${panel} flex flex-col gap-4 p-[25px]`}>
-            <h2 className="text-[18px] font-medium leading-[22px]">Keputusan</h2>
+            <Title icon={Scale}>Keputusan</Title>
             <LockTiles status={lock} />
             <Field label="Catatan untuk pabrik" hint="Wajib bila meminta dokumen atau menahan." htmlFor={fid("catatan")}>
               <textarea id={fid("catatan")} rows={3} className={`${inputBox} h-auto resize-y py-3 leading-5`} value={catatan} onChange={(e) => setCatatan(e.target.value)} />
@@ -254,7 +264,7 @@ function Review({ o }: { o: Order }) {
               {note}
             </p>
           </section>
-          <DokumenMenu order={o} role="exim" />
+          <DokumenMenu order={o} role="pabrik" />
         </aside>
       </div>
     </PabrikPage>
@@ -267,8 +277,8 @@ export default function EximPesananView() {
   if (!o) {
     return (
       <PabrikPage label="Pesanan tidak ditemukan" title="Pesanan tidak ditemukan" desc="Pesanan demo hanya tersimpan di browser tempat UMKM membuatnya." note="Demo.">
-        <Link href="/exim" className="text-[14px] font-medium text-brand underline underline-offset-4">
-          Kembali ke panel EXIM
+        <Link href="/pemeriksaan-exim" className="text-[14px] font-medium text-brand underline underline-offset-4">
+          Kembali ke pemeriksaan EXIM
         </Link>
       </PabrikPage>
     );

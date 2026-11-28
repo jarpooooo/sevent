@@ -1,5 +1,6 @@
 "use client";
 
+import { ClipboardCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { PENGELUARAN_LABEL, type PengeluaranStatus } from "../../lib/domain/types";
 import { num, rupiah } from "../../lib/format";
@@ -27,8 +28,9 @@ function Action({ o }: { o: Incoming }) {
   return (
     <Link
       href={`/pesanan-masuk/detail?id=${encodeURIComponent(o.id)}`}
-      className="inline-flex h-10 items-center rounded-[2px] border border-brand px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-soft"
+      className="inline-flex h-10 items-center gap-1.5 rounded-[2px] border border-brand px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-soft"
     >
+      {o.status === 1 ? <ClipboardCheck aria-hidden="true" className="size-4" strokeWidth={1.9} /> : <Truck aria-hidden="true" className="size-4" strokeWidth={1.9} />}
       {o.status === 1 ? "Siapkan pesanan" : o.pickup === "ambil" ? "Kelola, siap diambil" : "Kelola, kirim"}
     </Link>
   );

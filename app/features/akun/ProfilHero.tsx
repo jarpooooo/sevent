@@ -1,5 +1,6 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { m as motion } from "motion/react";
 import Image from "next/image";
 import MosaicCover from "../../components/mosaic/MosaicCover";
@@ -15,14 +16,12 @@ const PHOTO: Record<Role, { src: string; pos: string; alt: string }> = {
   umkm: { src: "/images/umkm.webp", pos: "50% 40%", alt: "Penjahit UMKM bekerja dengan kain perca" },
   pabrik: { src: "/images/gudang.webp", pos: "50% 55%", alt: "Gudang pabrik tekstil" },
   admin: { src: "/images/hero.webp", pos: "50% 45%", alt: "Tumpukan material sisa tekstil" },
-  exim: { src: "/images/hero.webp", pos: "50% 45%", alt: "Tumpukan material sisa tekstil" },
 };
 
 const ROLE_NOTE: Record<Role, string> = {
   umkm: "Semakin lengkap, semakin mudah pabrik dan admin memercayai pesananmu.",
   pabrik: "Data ini tercetak di invoice dan laporan kepabeanan. Yang kosong tertulis \"menunggu\", bukan angka karangan.",
   admin: "Nama dan jabatan tercetak di kolom tanda tangan dokumen.",
-  exim: "Nama dan jabatan tercetak di kolom pemeriksa pada dokumen.",
 };
 
 /**
@@ -92,14 +91,18 @@ export default function ProfilHero({
               <button
                 type="button"
                 onClick={onLogout}
-                className="rounded-[2px] border border-border-strong px-4 py-1.5 text-[13px] font-medium transition-colors hover:bg-brand-soft"
+                className="flex items-center gap-1.5 rounded-[2px] border border-border-strong px-4 py-1.5 text-[13px] font-medium transition-colors hover:bg-brand-soft"
               >
+                <LogOut aria-hidden="true" className="size-3.5" strokeWidth={1.9} />
                 Keluar
               </button>
             </div>
           </div>
         </div>
 
+        {role === "pabrik" ? (
+          <p className="max-w-[520px] text-[14px] leading-6 text-text-muted">{ROLE_NOTE[role]}</p>
+        ) : (
         <div className="flex flex-col gap-3" aria-label="Kelengkapan profil">
           <div className="flex items-baseline justify-between gap-4">
             <p className="font-display text-[44px] leading-none tabular-nums tracking-[-0.03em] text-brand">
@@ -125,6 +128,7 @@ export default function ProfilHero({
           </div>
           <p className="max-w-[520px] text-[13px] leading-5 text-text-muted">{ROLE_NOTE[role]}</p>
         </div>
+        )}
       </div>
 
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[2px] bg-thumb-empty lg:aspect-auto lg:min-h-[300px]">

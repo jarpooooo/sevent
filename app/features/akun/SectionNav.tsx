@@ -1,9 +1,9 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import Glyph from "./Glyph";
 
-export type NavItem = { id: string; label: string; done: number; total: number; seed: number };
+export type NavItem = { id: string; label: string; done: number; total: number; seed: number; icon: LucideIcon };
 
 /**
  * Daftar isi yang menempel di samping: lompat ke bagian, dengan glyph mozaik kelengkapan tiap bagian.
@@ -44,7 +44,7 @@ export default function SectionNav({ items }: { items: NavItem[] }) {
               active === i.id ? "bg-brand-soft font-medium" : "hover:bg-brand-soft/50"
             }`}
           >
-            <Glyph done={i.done} total={i.total} seed={i.seed} size={5} />
+            <i.icon aria-hidden="true" className={`size-[18px] shrink-0 ${active === i.id ? "text-brand" : "text-text-muted"}`} strokeWidth={1.8} />
             <span className="min-w-0 flex-1 truncate">{i.label}</span>
             <span className={`text-[12px] tabular-nums ${complete ? "text-brand" : "text-text-muted"}`}>
               {i.done}/{i.total}

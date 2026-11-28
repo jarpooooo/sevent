@@ -19,6 +19,7 @@ const UMKM_LINKS = [
 const PABRIK_LINKS = [
   { href: "/lot-saya", label: "Lot saya" },
   { href: "/pesanan-masuk", label: "Pesanan masuk" },
+  { href: "/pemeriksaan-exim", label: "Pemeriksaan EXIM" },
   { href: "/tagihan-komisi", label: "Tagihan komisi" },
   { href: "/kontak", label: "Kontak" },
 ];
@@ -28,18 +29,13 @@ const ADMIN_LINKS = [
   { href: "/kontak", label: "Kontak" },
 ];
 
-const EXIM_LINKS = [
-  { href: "/exim", label: "Panel EXIM" },
-  { href: "/kontak", label: "Kontak" },
-];
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const role = useRole();
-  const links = role === "pabrik" ? PABRIK_LINKS : role === "admin" ? ADMIN_LINKS : role === "exim" ? EXIM_LINKS : UMKM_LINKS;
+  const links = role === "pabrik" ? PABRIK_LINKS : role === "admin" ? ADMIN_LINKS : UMKM_LINKS;
   const account = useAccount();
 
   return (

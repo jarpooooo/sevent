@@ -4,12 +4,15 @@ import { AnimatePresence, m as motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useMemo, useState } from "react";
+import { ImagePlus } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Icon } from "../../components/ui/icons";
 import { inputBox, panel } from "../../components/ui/styles";
 import { LOT_TYPES, type LotCustoms, type LotType } from "../../lib/domain/types";
 import { num, rupiah } from "../../lib/format";
 import { customsComplete, EMPTY_CUSTOMS, saveLotCustoms } from "./lotdoc";
+import FotoSlot from "./FotoSlot";
+import KanalJual, { KANAL_AWAL, type Kanal, kanalErrors, kanalHarga, kanalLabel } from "./KanalJual";
 import { addLot } from "./lots-store";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -27,13 +30,14 @@ const CHECKS = [
   "Kode lot terbaca di foto",
 ] as const;
 
-const PHOTOS = [
-  { label: "Foto seluruh lot", src: "/images/gudang.webp", pos: "50% 55%" },
-  { label: "Tekstur dan ukuran", src: "/images/umkm.webp", pos: "50% 30%" },
-  { label: "Foto skala", src: "/images/hero.webp", pos: "50% 45%" },
+const FOTO = [
+  { label: "Foto seluruh lot", hint: "Tampak keseluruhan tumpukan." },
+  { label: "Tekstur dan ukuran", hint: "Dekat, dengan ukuran potongan terlihat." },
+  { label: "Foto skala", hint: "Dengan benda pembanding ukuran." },
+  { label: "Foto kode lot", hint: "Label atau kode batch terbaca." },
 ] as const;
 
-const TILE_KG = 25;
+const MAX_MB = 8;
 
 /** Kategori mengikuti nama bahan: Perca, Sisa gulungan, atau Cutting offcuts. */
 function categoryOf(bahan: string) {
@@ -56,6 +60,30 @@ function Field({ label, children, className = "" }: { label: string; children: R
 
 const panelIn = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } } };
 
+/** Tombol pilih atau ganti thumbnail (kotaknya sudah ada di pratinjau). */
+function ThumbButton({ url, onFile }: { url: string | null; onFile: (f: File | undefined) => void }) {
+  const id = useId();
+  return (
+    <label
+      htmlFor={id}
+      className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-[2px] border border-brand px-3 text-[13px] font-medium text-brand transition-colors hover:bg-brand-soft has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
+    >
+      <ImagePlus aria-hidden="true" className="size-3.5" strokeWidth={1.9} />
+      {url ? "Ganti thumbnail" : "Pilih thumbnail"}
+      <input
+        id={id}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => {
+          onFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+    </label>
+  );
+}
+
 export default function TambahLotView() {
   const id = useId();
   const router = useRouter();
@@ -66,22 +94,22 @@ export default function TambahLotView() {
   const [berat, setBerat] = useState("300 kg");
   const [moq, setMoq] = useState("5 kg");
   const [lokasi, setLokasi] = useState("Kab. Bantul, DI Yogyakarta");
-  const [hargaTetap, setHargaTetap] = useState("Rp12.000");
-  const [hargaAwal, setHargaAwal] = useState("Rp8.000");
-  const [batasBawah, setBatasBawah] = useState("Rp6.000");
-  const [extra, setExtra] = useState<string | null>(null);
-  const [checks, setChecks] = useState<boolean[]>([true, true, true, false]);
+  const [kanal, setKanal] = useState<Kanal>(KANAL_AWAL);
+  const [kanalTried, setKanalTried] = useState(false);
+  // Foto bukti (4 slot) dan thumbnail pratinjau. Kosong dulu: kotak placeholder, lalu tombol pilih foto.
+  const [fotos, setFotos] = useState<(string | null)[]>([null, null, null, null]);
+  const [thumb, setThumb] = useState<string | null>(null);
+  const [fotoErr, setFotoErr] = useState("");
+  const urls = useRef<string[]>([]);
+  useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
+  const [checks, setChecks] = useState<boolean[]>([false, false, false, false]);
   const [sent, setSent] = useState(false);
   // Data kepabeanan lot (opsional di sini; bisa dilengkapi lagi dari detail pesanan). Tidak ada isian bawaan.
   const [kb, setKb] = useState<LotCustoms>(EMPTY_CUSTOMS);
   const setK = <K extends keyof LotCustoms>(k: K, v: LotCustoms[K]) => setKb((p) => ({ ...p, [k]: v }));
   const setKDok = (k: "jenis" | "nomor" | "tanggal", v: string) => setKb((p) => ({ ...p, dokPemasukan: { ...p.dokPemasukan, [k]: v } }));
 
-  const tiles = Math.min(24, Math.max(1, Math.round(digits(berat) / TILE_KG)));
-  const [lelangFrom, setLelangFrom] = useState(8);
-  const split = Math.min(lelangFrom, tiles);
-  const regionalKg = split * TILE_KG;
-  const lelangKg = (tiles - split) * TILE_KG;
+  const kg = digits(berat) || 25;
 
   const category = useMemo(() => categoryOf(bahan), [bahan]);
   const codeShort = kode.replace(/\s*\(contoh demo\)\s*$/i, "");
@@ -89,20 +117,53 @@ export default function TambahLotView() {
 
   const toggleCheck = (i: number) => setChecks((c) => c.map((v, k) => (k === i ? !v : v)));
 
-  const onPhoto = (file: File | undefined) => {
-    if (!file) return;
-    setExtra(URL.createObjectURL(file));
-    setChecks((c) => c.map((v, k) => (k === 3 ? true : v)));
+  /** Terima satu berkas gambar: cek tipe dan ukuran, lalu pakai sebagai alamat sementara di browser. */
+  const toUrl = (file: File | undefined): string | null => {
+    if (!file) return null;
+    if (!file.type.startsWith("image/")) {
+      setFotoErr("Berkas harus gambar (JPG, PNG, atau WebP).");
+      return null;
+    }
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setFotoErr(`Ukuran foto maksimal ${MAX_MB} MB.`);
+      return null;
+    }
+    setFotoErr("");
+    const u = URL.createObjectURL(file);
+    urls.current.push(u);
+    return u;
   };
+  const setFoto = (i: number, file: File | undefined) => {
+    const u = toUrl(file);
+    if (!u) return;
+    setFotos((f) => f.map((v, k) => (k === i ? u : v)));
+    setChecks((c) => c.map((v, k) => (k === i ? true : v))); // slot terisi = butir checklist yang sesuai tercentang
+  };
+  const clearFoto = (i: number) => {
+    setFotos((f) => f.map((v, k) => (k === i ? null : v)));
+    setChecks((c) => c.map((v, k) => (k === i ? false : v)));
+  };
+  // Thumbnail: pilihan sendiri, atau foto seluruh lot bila belum memilih, atau placeholder.
+  const thumbUrl = thumb ?? fotos[0];
 
   const submit = () => {
+    setKanalTried(true);
+    if (Object.keys(kanalErrors(kanal)).length) {
+      document.getElementById(`${id}-kanal`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+    if (!fotos[0]) {
+      setFotoErr("Tambahkan minimal foto seluruh lot sebelum dikirim.");
+      document.getElementById(`${id}-bukti`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
     const created = addLot({
       name: bahan.trim() || "Lot baru",
       code: codeShort,
-      channel: lelangKg > 0 && regionalKg > 0 ? "Regional dan lelang terbalik" : lelangKg > 0 ? "Lelang terbalik" : "Regional, tetap",
-      price: lelangKg > 0 && regionalKg === 0 ? `Dari ${hargaAwal} / kg` : `${hargaTetap} / kg`,
-      stock: digits(berat) || tiles * TILE_KG,
-      capacity: digits(berat) || tiles * TILE_KG,
+      channel: kanalLabel(kanal),
+      price: kanalHarga(kanal),
+      stock: kg,
+      capacity: kg,
     });
     saveLotCustoms(created.id, kb);
     setSent(true);
@@ -194,38 +255,16 @@ export default function TambahLotView() {
                 Foto ini tampil di halaman lot. UMKM melihat kondisi bahan sebelum membeli.
               </p>
 
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {PHOTOS.map((p) => (
-                  <li key={p.label}>
-                    <div className="relative h-[112px] overflow-hidden rounded-[2px] bg-inverse">
-                      <Image src={p.src} alt="" fill sizes="180px" className="object-cover" style={{ objectPosition: p.pos }} />
-                    </div>
-                    <p className="mt-2 text-[12px] text-text-muted">{p.label}</p>
+              <ul id={`${id}-bukti`} className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
+                {FOTO.map((f, i) => (
+                  <li key={f.label} className="min-w-0">
+                    <FotoSlot label={f.label} hint={f.hint} url={fotos[i]} onFile={(file) => setFoto(i, file)} onClear={() => clearFoto(i)} />
                   </li>
                 ))}
-                <li>
-                  <label
-                    htmlFor={`${id}-foto`}
-                    className={`relative flex h-[112px] cursor-pointer items-center justify-center overflow-hidden rounded-[2px] text-[13px] font-medium text-brand transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand ${
-                      extra ? "" : "border border-dashed border-brand bg-brand-soft hover:bg-brand-soft/70"
-                    }`}
-                  >
-                    {extra ? (
-                      <Image unoptimized src={extra} alt="Foto kode lot yang kamu unggah" fill sizes="180px" className="object-cover" />
-                    ) : (
-                      "Tambah foto"
-                    )}
-                    <input
-                      id={`${id}-foto`}
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={(e) => onPhoto(e.target.files?.[0])}
-                    />
-                  </label>
-                  <p className="mt-2 text-[12px] text-text-muted">Foto kode lot</p>
-                </li>
               </ul>
+              <p role="alert" className="min-h-4 text-[13px] leading-4 text-text-soft">
+                {fotoErr}
+              </p>
 
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] border border-line bg-card px-[15px] py-3">
                 <span className="text-[13px] font-medium">Video 10 sampai 20 detik (opsional)</span>
@@ -259,56 +298,10 @@ export default function TambahLotView() {
               </fieldset>
             </motion.section>
 
-            {/* Harga dan kanal */}
-            <motion.section variants={panelIn} aria-label="Harga dan kanal" className={`${panel} flex flex-col gap-5 p-[25px]`}>
-              <h2 className="text-[18px] font-medium">Harga dan kanal</h2>
-              <p className="text-[13px] text-text-muted">Satu lot bisa dibagi ke dua kanal. Angka contoh demo.</p>
-              <div className="grid items-start gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-3 rounded-[2px] border border-line bg-card p-[17px]">
-                  <h3 className="text-[15px] font-medium">Harga tetap regional</h3>
-                  <Field label="Harga per kg">
-                    <input className={inputBox} value={hargaTetap} onChange={(e) => setHargaTetap(e.target.value)} aria-label="Harga per kg" inputMode="numeric" />
-                  </Field>
-                  <p className="text-[13px] text-text-muted">Terlihat UMKM dalam radius 50 km dari pabrik.</p>
-                </div>
-                <div className="flex flex-col gap-3 rounded-[2px] border border-line bg-card p-[17px]">
-                  <h3 className="text-[15px] font-medium">Lelang terbalik</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Harga awal">
-                      <input className={inputBox} value={hargaAwal} onChange={(e) => setHargaAwal(e.target.value)} aria-label="Harga awal" inputMode="numeric" />
-                    </Field>
-                    <Field label="Batas bawah">
-                      <input className={inputBox} value={batasBawah} onChange={(e) => setBatasBawah(e.target.value)} aria-label="Batas bawah" inputMode="numeric" />
-                    </Field>
-                  </div>
-                  <p className="text-[13px] text-text-muted">72 jam, turun tiap 6 jam, 11 langkah. Batas bawah tidak terlihat UMKM.</p>
-                </div>
-              </div>
-
-              <div>
-                <span className="block text-[12px] font-medium text-text-muted">Pembagian stok</span>
-                <ul aria-label="Pembagian stok per ubin" className="mt-2 flex flex-wrap gap-1">
-                  {Array.from({ length: tiles }, (_, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.6 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.35, ease: EASE, delay: 0.45 + i * 0.03 }}
-                    >
-                      <button
-                        type="button"
-                        aria-label={`Ubin ${i + 1}: ${i < split ? "regional" : "lelang terbalik"}. Klik untuk memindahkan batas pembagian.`}
-                        onClick={() => setLelangFrom(i + 1 === split ? i : i + 1)}
-                        className={`block size-7 rounded-[2px] transition-colors duration-300 ${i < split ? "bg-brand" : "bg-accent"}`}
-                      />
-                    </motion.li>
-                  ))}
-                </ul>
-                <p className="mt-2 text-[13px] text-text-muted">
-                  1 ubin = {TILE_KG} kg. Regional {num(regionalKg)} kg, lelang terbalik {num(lelangKg)} kg.
-                </p>
-              </div>
-            </motion.section>
+            {/* Kanal jual */}
+            <motion.div variants={panelIn} id={`${id}-kanal`}>
+              <KanalJual k={kanal} onChange={setKanal} errors={kanalTried ? kanalErrors(kanal) : {}} />
+            </motion.div>
 
             {/* Data kepabeanan */}
             <motion.section variants={panelIn} aria-label="Data kepabeanan lot" className={`${panel} flex flex-col gap-5 p-[25px]`}>
@@ -384,8 +377,17 @@ export default function TambahLotView() {
             <h2 className="text-[18px] font-medium">Pratinjau halaman lot</h2>
             <p className="mt-4 text-[13px] text-text-muted">Begini lot tampil di Katalog setelah diperiksa.</p>
 
-            <div className="relative mt-4 h-[250px] overflow-hidden rounded-[2px] bg-inverse">
-              <Image src="/images/hero.webp" alt="" fill sizes="430px" className="object-cover" style={{ objectPosition: "50% 45%" }} />
+            <div className={`relative mt-4 h-[250px] overflow-hidden rounded-[2px] ${thumbUrl ? "bg-inverse" : "border border-dashed border-border-strong bg-brand-soft/50"}`}>
+              {thumbUrl ? (
+                <Image unoptimized src={thumbUrl} alt="Thumbnail lot di Katalog" fill sizes="430px" className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 grid place-items-center">
+                  <div className="flex flex-col items-center gap-2 text-text-muted">
+                    <ImagePlus aria-hidden="true" className="size-9" strokeWidth={1.4} />
+                    <p className="text-[13px]">Thumbnail belum ada</p>
+                  </div>
+                </div>
+              )}
               <span className="absolute left-0 top-0 flex h-7 w-[150px] items-center bg-panel px-3 text-[12px] font-medium">Belum tayang</span>
               <motion.span
                 aria-hidden="true"
@@ -403,21 +405,40 @@ export default function TambahLotView() {
               />
             </div>
 
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <ThumbButton
+                url={thumb}
+                onFile={(f) => {
+                  const u = toUrl(f);
+                  if (u) setThumb(u);
+                }}
+              />
+              {thumb && (
+                <button type="button" onClick={() => setThumb(null)} className="h-9 rounded-[2px] px-2.5 text-[13px] font-medium text-text-muted transition-colors hover:text-text">
+                  {fotos[0] ? "Pakai foto seluruh lot" : "Hapus thumbnail"}
+                </button>
+              )}
+            </div>
+            <p className="mt-1.5 text-[12px] leading-[15px] text-text-muted">
+              {thumb ? "Thumbnail pilihanmu." : fotos[0] ? "Memakai foto seluruh lot. Pilih foto lain bila mau menggantinya." : "Isi foto seluruh lot atau pilih thumbnail sendiri."}
+            </p>
+
             <p className="mt-4 text-[12px] text-text-muted">
               Lot {codeShort}, Pabrik Contoh, {lokasi.split(",")[0]}
             </p>
             <p className="font-display mt-4 text-[26px] leading-[28px] tracking-[-0.02em]">{bahan || "Nama bahan"}</p>
             <p className="mt-4 text-[13px] text-text-muted">
-              Regional, {category}, MOQ {num(moqKg)} kg
+              {kanal.jenis === "tetap" ? "Regional" : "Lelang terbalik"}, {category}, MOQ {num(moqKg)} kg
             </p>
             <p className="mt-4 flex items-end gap-1.5">
+              {kanal.jenis === "lelang" && <span className="pb-0.5 text-[14px] text-text-muted">Dari</span>}
               <span className="font-display text-[32px] leading-[35px] tabular-nums tracking-[-0.02em] text-brand">
-                {digits(hargaTetap) ? rupiah(digits(hargaTetap)) : "Rp0"}
+                {digits(kanal.jenis === "tetap" ? kanal.harga : kanal.awal) ? rupiah(digits(kanal.jenis === "tetap" ? kanal.harga : kanal.awal)) : "Rp0"}
               </span>
               <span className="pb-0.5 text-[14px] text-text-muted">/ kg</span>
             </p>
             <p className="mt-4 rounded-[2px] bg-brand-soft px-3 py-[8px] text-[12px] font-medium leading-[15px] text-brand">
-              Pembelian kecil 5 sampai 25 kg dilayani lebih dulu
+              {kanal.jenis === "tetap" ? "Pembelian kecil 5 sampai 25 kg dilayani lebih dulu" : "Harga turun tiap 6 jam selama 72 jam. Batas bawah tidak terlihat."}
             </p>
 
             <div className="mt-4">

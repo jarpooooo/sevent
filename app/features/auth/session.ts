@@ -8,7 +8,7 @@ import { useMemo, useSyncExternalStore } from "react";
  *  - Akun demo lokal tanpa server (provider: "demo").
  * Navbar, profil, checkout, dan pembatas halaman mengikuti sesi ini.
  */
-export type Role = "umkm" | "pabrik" | "admin" | "exim";
+export type Role = "umkm" | "pabrik" | "admin";
 export type AuthProviderKind = "google" | "demo";
 
 export type Account = {
@@ -78,20 +78,6 @@ export const ACCOUNTS: Record<Role, Account> = {
     address: "Yogyakarta",
     province: "DI Yogyakarta",
   },
-  exim: {
-    role: "exim",
-    provider: "demo",
-    name: "Staf EXIM",
-    initials: "EX",
-    chip: "Staf EXIM, EXIM",
-    kind: "EXIM pabrik",
-    email: "exim@pabrik.contoh",
-    whatsapp: "0813 9876 0000",
-    business: "CV Contoh Tekstil",
-    jabatan: "Staf EXIM",
-    address: "Jl. Industri Contoh No. 3, Kota Yogyakarta",
-    province: "DI Yogyakarta",
-  },
 };
 
 const KEY = "cl-session-v1";
@@ -112,10 +98,10 @@ const subs = new Set<() => void>();
 
 function parse(r: string | null): SessionData | null {
   if (!r) return null;
-  if (r === "umkm" || r === "pabrik" || r === "admin" || r === "exim") return { role: r, provider: "demo" };
+  if (r === "umkm" || r === "pabrik" || r === "admin") return { role: r, provider: "demo" };
   try {
     const j = JSON.parse(r) as SessionData;
-    return j.role === "umkm" || j.role === "pabrik" || j.role === "admin" || j.role === "exim" ? j : null;
+    return j.role === "umkm" || j.role === "pabrik" || j.role === "admin" ? j : null;
   } catch {
     return null;
   }
@@ -218,6 +204,6 @@ export function takeLogoutFlag() {
 }
 
 /** Tujuan menu "halaman kerja" tiap peran. */
-export const HOME_OF: Record<Role, string> = { umkm: "/katalog", pabrik: "/lot-saya", admin: "/admin", exim: "/exim" };
+export const HOME_OF: Record<Role, string> = { umkm: "/katalog", pabrik: "/lot-saya", admin: "/admin" };
 
-export const ROLE_LABEL: Record<Role, string> = { umkm: "UMKM", pabrik: "Pabrik", admin: "Admin", exim: "EXIM" };
+export const ROLE_LABEL: Record<Role, string> = { umkm: "UMKM", pabrik: "Pabrik", admin: "Admin" };

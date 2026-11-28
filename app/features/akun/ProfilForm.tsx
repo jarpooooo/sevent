@@ -1,5 +1,6 @@
 "use client";
 
+import { Building2, Circle, CircleCheck, FileText, Landmark, MapPin, ReceiptText, Save, Send, ShieldCheck, Store, Upload, UserRound } from "lucide-react";
 import { AnimatePresence, m as motion } from "motion/react";
 import { useId, useState, type ReactNode } from "react";
 import { useSafeReducedMotion } from "../../components/motion/useSafeReducedMotion";
@@ -127,7 +128,7 @@ export default function ProfilForm({
   };
   const setUsaha = (k: "jenis" | "produk" | "lamaTahun" | "pekerja" | "akun", v: string) =>
     setF((p) => ({ ...p, usaha: { jenis: "", produk: "", lamaTahun: "", pekerja: "", akun: "", ...p.usaha, [k]: v } }));
-  const setPabrik = (k: "sektor" | "jenisSisa" | "nomorIzinKB" | "kantorPabean" | "picNama" | "picTelepon" | "jamAmbil", v: string, ...also: string[]) => {
+  const setPabrik = (k: "sektor" | "jenisSisa" | "nomorIzinKB" | "kantorPabean" | "picNama" | "picTelepon" | "jamAmbil" | "eximNama" | "eximJabatan", v: string, ...also: string[]) => {
     setF((p) => ({
       ...p,
       pabrik: { sektor: "", jenisSisa: "", nomorIzinKB: "", kantorPabean: "", picNama: "", picTelepon: "", jamAmbil: "", ...p.pabrik, [k]: v } as NonNullable<Profil["pabrik"]>,
@@ -194,18 +195,18 @@ export default function ProfilForm({
   const count = (list: boolean[]) => ({ done: list.filter(Boolean).length, total: list.length });
   const cDiri = count([okv(f.person), kind === "staf" || okv(f.business), phoneValid(f.phone), emailValid(f.email ?? ""), ...(kind === "umkm" ? [] : [okv(f.jabatan)])]);
   const cUsaha = count([okv(f.usaha?.jenis), okv(f.usaha?.produk), okv(f.usaha?.lamaTahun), okv(f.usaha?.pekerja), okv(f.usaha?.akun)]);
-  const cPabrik = count([!!f.pabrik?.sektor, okv(f.pabrik?.jenisSisa), okv(f.pabrik?.picNama), okv(f.pabrik?.picTelepon), okv(f.pabrik?.jamAmbil)]);
+  const cPabrik = count([!!f.pabrik?.sektor, okv(f.pabrik?.jenisSisa), okv(f.pabrik?.picNama), okv(f.pabrik?.picTelepon), okv(f.pabrik?.jamAmbil), okv(f.pabrik?.eximNama), okv(f.pabrik?.eximJabatan)]);
   const cAlamat = count([okv(f.address), okv(f.kota), okv(f.provinsi), ...(kind === "umkm" ? [sameAddr || okv(f.alamatKirim)] : [])]);
   const cPajak = count(isPabrik ? [npwpValid(f.npwp ?? ""), okv(f.pabrik?.nomorIzinKB), okv(f.pabrik?.kantorPabean)] : [npwpValid(f.npwp ?? "")]);
   const cRek = count([okv(f.rekening?.bank), rekeningValid(f.rekening?.nomor ?? ""), okv(f.rekening?.atasNama)]);
   const cVerif = count(kind === "umkm" ? [proofOk, okv(f.needs?.fabric), /^\d+$/.test((f.needs?.monthlyKg ?? "").trim())] : [proofOk]);
   const navItems: NavItem[] = [
-    { id: "diri", label: "Data diri", ...cDiri, seed: 3 },
-    ...(kind === "umkm" ? [{ id: "usaha", label: "Tentang usahamu", ...cUsaha, seed: 7 }] : []),
-    ...(isPabrik ? [{ id: "pabrik", label: "Tentang pabrikmu", ...cPabrik, seed: 11 }] : []),
-    ...(kind !== "staf" ? [{ id: "alamat", label: "Alamat", ...cAlamat, seed: 5 }, { id: "pajak", label: isPabrik ? "Pajak dan izin" : "Identitas pajak", ...cPajak, seed: 9 }] : []),
-    ...(isPabrik ? [{ id: "rekening", label: "Rekening", ...cRek, seed: 13 }] : []),
-    ...(kind !== "staf" ? [{ id: "verifikasi", label: "Verifikasi", ...cVerif, seed: 17 }] : []),
+    { id: "diri", label: "Data diri", ...cDiri, seed: 3, icon: UserRound },
+    ...(kind === "umkm" ? [{ id: "usaha", label: "Tentang usahamu", ...cUsaha, seed: 7, icon: Store }] : []),
+    ...(isPabrik ? [{ id: "pabrik", label: "Tentang pabrikmu", ...cPabrik, seed: 11, icon: Building2 }] : []),
+    ...(kind !== "staf" ? [{ id: "alamat", label: "Alamat", ...cAlamat, seed: 5, icon: MapPin }, { id: "pajak", label: isPabrik ? "Pajak dan izin" : "Identitas pajak", ...cPajak, seed: 9, icon: ReceiptText }] : []),
+    ...(isPabrik ? [{ id: "rekening", label: "Rekening", ...cRek, seed: 13, icon: Landmark }] : []),
+    ...(kind !== "staf" ? [{ id: "verifikasi", label: "Verifikasi", ...cVerif, seed: 17, icon: ShieldCheck }] : []),
   ];
   const totDone = navItems.reduce((n, i) => n + i.done, 0);
   const totAll = navItems.reduce((n, i) => n + i.total, 0);
@@ -250,6 +251,7 @@ export default function ProfilForm({
       {/* ---------- Data diri ---------- */}
       <Section
         id="diri"
+        icon={UserRound}
         done={cDiri.done}
         total={cDiri.total}
         seed={3}
@@ -297,7 +299,7 @@ export default function ProfilForm({
 
       {/* ---------- Detail usaha UMKM ---------- */}
       {kind === "umkm" && (
-        <Section id="usaha" done={cUsaha.done} total={cUsaha.total} seed={7} title="Tentang usahamu" desc="Membantu pabrik memahami kebutuhanmu. Semua boleh dikosongkan.">
+        <Section id="usaha" icon={Store} done={cUsaha.done} total={cUsaha.total} seed={7} title="Tentang usahamu" desc="Membantu pabrik memahami kebutuhanmu. Semua boleh dikosongkan.">
           <Grid>
             <Field label="Jenis usaha" htmlFor={fid("ujenis")}>
               <input id={fid("ujenis")} className={inputBox} placeholder="Contoh: konveksi, penjahit rumahan" value={f.usaha?.jenis ?? ""} disabled={lock} onChange={(e) => setUsaha("jenis", e.target.value)} />
@@ -320,7 +322,7 @@ export default function ProfilForm({
 
       {/* ---------- Detail pabrik ---------- */}
       {isPabrik && (
-        <Section id="pabrik" done={cPabrik.done} total={cPabrik.total} seed={11} title="Tentang pabrikmu" desc="Menentukan jenis lot yang kamu jual dan siapa yang menyerahkan barang.">
+        <Section id="pabrik" icon={Building2} done={cPabrik.done} total={cPabrik.total} seed={11} title="Tentang pabrikmu" desc="Menentukan jenis lot yang kamu jual dan siapa yang menyerahkan barang.">
           <Grid>
             <Field label="Kegiatan usaha" error={errs.sektor} htmlFor={fid("sektor")}>
               <Select id={fid("sektor")} value={f.pabrik?.sektor ?? ""} onChange={(v) => setPabrik("sektor", v, "sektor")} options={SEKTOR_OPTS} placeholder="Pilih kegiatan usaha" disabled={lock} invalid={!!errs.sektor} />
@@ -337,13 +339,19 @@ export default function ProfilForm({
             <Field label="Jam serah terima barang" hint="Contoh: Senin sampai Jumat, 08.00 sampai 15.00." htmlFor={fid("jamAmbil")} className="sm:col-span-2">
               <input id={fid("jamAmbil")} className={inputBox} value={f.pabrik?.jamAmbil ?? ""} disabled={lock} onChange={(e) => setPabrik("jamAmbil", e.target.value)} />
             </Field>
+            <Field label="Petugas EXIM" hint="Memeriksa pengeluaran barang. Tercetak sebagai pemeriksa di dokumen." htmlFor={fid("eximNama")}>
+              <input id={fid("eximNama")} className={inputBox} value={f.pabrik?.eximNama ?? ""} disabled={lock} onChange={(e) => setPabrik("eximNama", e.target.value)} />
+            </Field>
+            <Field label="Jabatan petugas EXIM" htmlFor={fid("eximJabatan")}>
+              <input id={fid("eximJabatan")} className={inputBox} placeholder="Contoh: staf EXIM" value={f.pabrik?.eximJabatan ?? ""} disabled={lock} onChange={(e) => setPabrik("eximJabatan", e.target.value)} />
+            </Field>
           </Grid>
         </Section>
       )}
 
       {/* ---------- Alamat ---------- */}
       {kind !== "staf" && (
-        <Section id="alamat" done={cAlamat.done} total={cAlamat.total} seed={5} title={isPabrik ? "Alamat pabrik" : "Alamat usaha dan kirim"}>
+        <Section id="alamat" icon={MapPin} done={cAlamat.done} total={cAlamat.total} seed={5} title={isPabrik ? "Alamat pabrik" : "Alamat usaha dan kirim"}>
           <Field
             label="Alamat lengkap"
             error={errs.address}
@@ -391,6 +399,7 @@ export default function ProfilForm({
       {kind !== "staf" && (
         <Section
           id="pajak"
+        icon={ReceiptText}
           done={cPajak.done}
           total={cPajak.total}
           seed={9}
@@ -421,7 +430,7 @@ export default function ProfilForm({
 
       {/* ---------- Rekening pencairan (pabrik) ---------- */}
       {isPabrik && (
-        <Section id="rekening" done={cRek.done} total={cRek.total} seed={13} title="Rekening pencairan dana" desc="Setelah barang diterima, PJP meneruskan dana ke rekening ini. Di demo tidak ada uang yang bergerak.">
+        <Section id="rekening" icon={Landmark} done={cRek.done} total={cRek.total} seed={13} title="Rekening pencairan dana" desc="Setelah barang diterima, PJP meneruskan dana ke rekening ini. Di demo tidak ada uang yang bergerak.">
           <Grid>
             <Field label="Bank" error={errs.bank} htmlFor={fid("bank")}>
               <input id={fid("bank")} className={inputBox} placeholder="Contoh: Bank Mandiri" value={f.rekening?.bank ?? ""} disabled={lock} onChange={(e) => setRek("bank", e.target.value, "bank")} aria-invalid={!!errs.bank} />
@@ -440,6 +449,7 @@ export default function ProfilForm({
       {kind !== "staf" && (
         <Section
           id="verifikasi"
+        icon={ShieldCheck}
           done={cVerif.done}
           total={cVerif.total}
           seed={17}
@@ -533,6 +543,7 @@ export default function ProfilForm({
                 htmlFor={fid("docs")}
                 className={`flex cursor-pointer flex-col items-center gap-1 rounded-[2px] border border-dashed px-4 py-6 text-center transition-colors hover:bg-brand-soft/50 ${errs.docs ? "border-text" : "border-brand"}`}
               >
+                <Upload aria-hidden="true" className="size-5 text-brand" strokeWidth={1.8} />
                 <span className="text-[14px] font-medium text-brand">Pilih berkas bukti usaha</span>
                 <span className="text-[12px] leading-[15px] text-text-muted">
                   Foto tempat produksi, hasil kerajinan, katalog produk, akun usaha, atau salinan NIB. JPG, PNG, atau PDF. Di demo ini hanya nama berkas yang dicatat.
@@ -575,13 +586,14 @@ export default function ProfilForm({
       {kind !== "staf" && (
         <Section
           id="dokumen"
+        icon={FileText}
           title="Kelengkapan data untuk dokumen"
           desc={'Invoice komersial, laporan kepabeanan, dan lembar rekonsiliasi memakai data di atas. Data yang kosong tertulis "menunggu" di dokumen, bukan angka karangan.'}
         >
           <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
             {ready.map(([t, ok]) => (
               <li key={t} className="flex items-center gap-2.5 text-[14px]">
-                <span aria-hidden="true" className={`block size-3 shrink-0 rounded-[2px] ${ok ? "bg-brand" : "border border-border-strong"}`} />
+                {ok ? <CircleCheck aria-hidden="true" className="size-4 shrink-0 text-brand" strokeWidth={1.9} /> : <Circle aria-hidden="true" className="size-4 shrink-0 text-border-strong" strokeWidth={1.9} />}
                 <span className={ok ? "" : "text-text-muted"}>
                   {t}
                   <span className="sr-only">{ok ? ", terisi" : ", belum terisi"}</span>
@@ -595,11 +607,15 @@ export default function ProfilForm({
         </div>
       </div>
 
-      <div className="sticky bottom-4 z-20 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[2px] border border-line bg-panel px-4 py-3 sm:px-5">
-        <p className="mr-auto flex items-baseline gap-2">
-          <span className="font-display text-[24px] leading-none tabular-nums tracking-[-0.02em] text-brand">{pct}%</span>
-          <span className="text-[13px] text-text-muted">lengkap</span>
-        </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[2px] border border-line bg-panel px-4 py-3 sm:px-5">
+        {isPabrik ? (
+          <span className="mr-auto" />
+        ) : (
+          <p className="mr-auto flex items-baseline gap-2">
+            <span className="font-display text-[24px] leading-none tabular-nums tracking-[-0.02em] text-brand">{pct}%</span>
+            <span className="text-[13px] text-text-muted">lengkap</span>
+          </p>
+        )}
         <div role="status" className="min-h-4 max-w-[420px] text-[13px] leading-[17px] text-text-muted">
           <AnimatePresence mode="wait">
             {note && (
@@ -610,11 +626,13 @@ export default function ProfilForm({
           </AnimatePresence>
         </div>
         {!submitted && kind !== "staf" && (
-          <button type="button" onClick={() => save(true)} className={`${ghost} h-11 py-0`}>
+          <button type="button" onClick={() => save(true)} className={`${ghost} flex h-11 items-center gap-2 py-0`}>
+            <Send aria-hidden="true" className="size-4" strokeWidth={1.9} />
             Kirim untuk verifikasi
           </button>
         )}
-        <motion.button type="submit" whileTap={{ scale: 0.98 }} className="h-11 rounded-[2px] bg-brand px-6 text-[14px] font-medium text-surface transition-colors hover:bg-brand-hover">
+        <motion.button type="submit" whileTap={{ scale: 0.98 }} className="flex h-11 items-center gap-2 rounded-[2px] bg-brand px-6 text-[14px] font-medium text-surface transition-colors hover:bg-brand-hover">
+          <Save aria-hidden="true" className="size-4" strokeWidth={1.9} />
           Simpan profil
         </motion.button>
       </div>

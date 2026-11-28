@@ -26,7 +26,7 @@ export type PartyProfile = {
   npwp?: string;
   kota?: string;
   provinsi?: string;
-  pabrik?: { nomorIzinKB: string; kantorPabean: string };
+  pabrik?: { nomorIzinKB: string; kantorPabean: string; eximNama?: string; eximJabatan?: string };
 };
 
 export type DocInput = {
@@ -62,6 +62,9 @@ const joinAlamat = (p: PartyProfile) => {
 };
 const kontak = (p: { phone: string; email?: string }) => [filled(p.phone), filled(p.email)].filter(Boolean).join(", ");
 const kurirName = (c?: string) => (c === "J&T" ? "J&T Express" : (c ?? "JNE atau J&T"));
+
+const KATEGORI_USUL: Record<string, string> = { "Cutting offcuts": "Perca pemotongan", Perca: "Perca pemotongan", "Sisa gulungan": "Sisa bahan baku" };
+const kategoriUsulan = (lot?: Lot) => (lot ? (KATEGORI_USUL[lot.category] ?? "") : "");
 
 export const invoiceNo = (o: Order) => `INV-${o.id}`;
 export const laporanNo = (o: Order) => `LPK-${o.id}`;
@@ -194,9 +197,11 @@ export function laporanContext(i: DocInput) {
     penerima_identitas: idPenerima || "Tidak dipersyaratkan atau belum diisi",
 
     uraian_kode_lot: `${lot?.title ?? o.title} / ${o.code}`,
-    kategori: filled(o.kategoriMaterial) || P("klasifikasi EXIM (perca pemotongan, sisa bahan baku, atau produk reject)"),
+    kategori:
+      filled(o.kategoriMaterial) ||
+      (kategoriUsulan(lot) ? `Usulan: ${kategoriUsulan(lot)}, menunggu konfirmasi EXIM` : P("klasifikasi EXIM (perca pemotongan, sisa bahan baku, atau produk reject)")),
     komposisi_asal: `${lot?.spec.komposisi ?? "-"}; asal bahan: ${asal || P("impor atau domestik, diisi pabrik")}`,
-    hs_code_negara: `${filled(c.hsCode) || P("HS Code, diisi pabrik dan dikonfirmasi EXIM")} / ${filled(c.negaraAsal) || P("negara asal")}`,
+    hs_code_negara: `${filled(c.hsCode) || P("HS Code, diisi pabrik dan dikonfirmasi EXIM")} / ${filled(c.negaraAsal) || (c.asalBahan === "domestik" ? "Indonesia" : P("negara asal"))}`,
     jumlah_satuan: `${num(o.qty)} ${o.unit}`,
     berat: `${num(o.qty)} ${o.unit} / ${filled(c.beratKotor) ? `${c.beratKotor} ${o.unit}` : P("berat kotor, diisi pabrik")}`,
     kemasan: kemasan || P("jenis dan jumlah kemasan, diisi pabrik"),
@@ -205,7 +210,8 @@ export function laporanContext(i: DocInput) {
     dok_pemasukan: dokText(c.dokPemasukan) || P("dokumen pemasukan, diisi pabrik"),
     dok_pengeluaran: dokText(o.dokPengeluaran) || P("dokumen pengeluaran, diisi EXIM"),
     persetujuan_pengeluaran: filled(o.persetujuanPengeluaran) || P("referensi persetujuan pengeluaran, diisi EXIM"),
-    ref_laporan_fiskal: filled(o.refLaporanFiskal) || BELUM,
+    // lembar rekonsiliasi Kainara untuk pesanan ini; EXIM boleh menggantinya dengan referensi lain
+    ref_laporan_fiskal: filled(o.refLaporanFiskal) || `${laporanNo(o)} (lembar rekonsiliasi fiskal dan stok)`,
     ...checkbox(o.statusPengeluaran),
 
     ttd_penyiap_nama: filled(s.person) || P("nama penyiap"),
@@ -226,7 +232,11 @@ export function rekonContext(i: DocInput) {
   const rencana = o.status < 3 ? o.qty : 0;
   const fiskal = o.fiskal ?? {};
   const row = (k: FiskalKey) => fiskalRow(fiskal[k]);
-  const pabean = row("pabean");
+  // dasar nilai pabean: nilai transaksi pesanan (hanya angka dasar); tarif dan nominal tetap menunggu EXIM
+  const pabeanRaw = row("pabean");
+  const pabean = fiskal.pabean?.status === undefined || fiskal.pabean.status === "belum"
+    ? { ...pabeanRaw, dasar: `${filled(fiskal.pabean?.dasar) || `Nilai transaksi ${rupiah(subtotal(o))}`} (usulan, belum diverifikasi)` }
+    : pabeanRaw;
   const bm = row("bm");
   const ppnImpor = row("ppnImpor");
   const pph22 = row("pph22");

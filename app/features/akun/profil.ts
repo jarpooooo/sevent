@@ -72,6 +72,9 @@ export type Profil = {
     picTelepon: string;
     /** jam serah terima atau pengambilan barang */
     jamAmbil: string;
+    /** petugas EXIM pabrik: tercetak sebagai pemeriksa di dokumen kepabeanan */
+    eximNama?: string;
+    eximJabatan?: string;
   };
   /** rekening pencairan dana ke pabrik (diisi pabrik, dipakai PJP saat settlement) */
   rekening?: { bank: string; nomor: string; atasNama: string };
@@ -130,6 +133,38 @@ export const emailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.tri
 export const rekeningValid = (v: string) => /^\d{6,20}$/.test(digits(v));
 
 /** Isian awal: profil tersimpan, atau data akun. NPWP, nomor izin, kantor pabean, dan rekening tidak pernah diisi bawaan. */
+/**
+ * Isi contoh untuk akun demo, supaya isian turunan (prefill, dokumen) bisa dicoba tanpa mengetik dulu.
+ * Semua nilai ini rekaan: nomor izin, NPWP, dan rekening hanya contoh, bukan data nyata.
+ */
+function demoExtra(a: Account): Partial<Profil> {
+  if (a.provider !== "demo") return {};
+  if (a.role === "pabrik") {
+    return {
+      npwp: "000000000000000",
+      pabrik: {
+        sektor: "hilir",
+        jenisSisa: "perca cutting denim",
+        nomorIzinKB: "CONTOH-KB-01",
+        kantorPabean: "KPPBC contoh Yogyakarta",
+        picNama: "Joko Susilo",
+        picTelepon: "0813 9876 0001",
+        jamAmbil: "Senin sampai Jumat, 08.00 sampai 15.00",
+        eximNama: "Rina Kusuma",
+        eximJabatan: "Staf EXIM",
+      },
+      rekening: { bank: "Bank contoh", nomor: "1234567890", atasNama: "CV Contoh Tekstil" },
+    };
+  }
+  if (a.role === "umkm") {
+    return {
+      usaha: { jenis: "Konveksi rumahan", produk: "Tas dan aksesori", lamaTahun: "4", pekerja: "3", akun: "@sarijahit" },
+      needs: { fabric: "denim, katun polos", minSize: "20 cm", monthlyKg: "40", budget: "500000" },
+    };
+  }
+  return {};
+}
+
 export function initialProfil(a: Account, saved: Profil | null): Profil {
   const demo = a.provider === "demo";
   const base: Profil = {
@@ -143,6 +178,7 @@ export function initialProfil(a: Account, saved: Profil | null): Profil {
     email: a.email,
     kota: demo ? (a.address.split(",").pop()?.trim() ?? "") : "",
     provinsi: a.province,
+    ...demoExtra(a),
   };
   return saved ? { ...base, ...saved } : base;
 }

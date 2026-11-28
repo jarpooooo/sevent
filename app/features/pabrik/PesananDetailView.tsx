@@ -1,6 +1,8 @@
 "use client";
 
 import { m as motion } from "motion/react";
+import { ClipboardList, ListChecks, Package, ShieldCheck } from "lucide-react";
+import Title from "./Title";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
@@ -14,7 +16,7 @@ import DokumenMenu from "../dokumen/DokumenMenu";
 import { advanceOrder, patchOrder, useOrder } from "../umkm/pesanan/orders";
 import { STATUS_LABEL } from "./incoming";
 import LotCustomsForm from "./LotCustomsForm";
-import { customsComplete, EMPTY_CUSTOMS, useLotCustomsStore } from "./lotdoc";
+import { customsComplete, customsOf, useLotCustomsStore } from "./lotdoc";
 import PabrikPage from "./PabrikPage";
 import { LockTiles, LotThumb } from "./tiles";
 
@@ -50,7 +52,7 @@ function Detail({ o }: { o: Order }) {
   const id = useId();
   const kirim = o.pickup === "kirim";
   const store = useLotCustomsStore();
-  const customs = { ...EMPTY_CUSTOMS, ...store[o.slug] };
+  const customs = customsOf(store, o.slug);
   const lot = LOTS.find((l) => l.slug === o.slug);
   const lock = o.statusPengeluaran ?? "draf";
 
@@ -95,7 +97,7 @@ function Detail({ o }: { o: Order }) {
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_444px]">
         <div className="flex min-w-0 flex-col gap-6">
           <section aria-label="Ringkasan pesanan" className={`${panel} flex flex-col gap-3 p-[25px]`}>
-            <h2 className="text-[18px] font-medium leading-[22px]">Ringkasan</h2>
+            <Title icon={Package}>Ringkasan</Title>
             <div className="flex gap-4">
               <LotThumb lot={lot} seed={11} />
               <p className="text-[13px] leading-5 text-text-muted">
@@ -113,7 +115,7 @@ function Detail({ o }: { o: Order }) {
 
           <section aria-label="Stock opname dan pengiriman" className={`${panel} flex flex-col gap-5 p-[25px]`}>
             <div className="flex flex-col gap-1">
-              <h2 className="text-[18px] font-medium leading-[22px]">Stock opname dan {kirim ? "resi" : "kode pickup"}</h2>
+              <Title icon={ClipboardList}>Stock opname dan {kirim ? "resi" : "kode pickup"}</Title>
               <p className="max-w-[640px] text-[13px] leading-5 text-text-muted">
                 Reservasi dan pembayaran bukan pengeluaran fisik. Stok fisik dicocokkan dengan catatan sistem sebelum barang keluar.
               </p>
@@ -148,7 +150,7 @@ function Detail({ o }: { o: Order }) {
         <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24">
           <section aria-label="Compliance Lock" className={`${panel} flex flex-col gap-3 p-[25px]`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-[18px] font-medium leading-[22px]">Compliance Lock</h2>
+              <Title icon={ShieldCheck}>Compliance Lock</Title>
               <StatusPill tone={LOCK_TONE[lock]}>{PENGELUARAN_LABEL[lock]}</StatusPill>
             </div>
             <LockTiles status={lock} />
@@ -157,10 +159,15 @@ function Detail({ o }: { o: Order }) {
               <p className="rounded-[2px] bg-warn-soft px-3.5 py-3 text-[13px] leading-5">Catatan EXIM: {o.catatanExim}</p>
             )}
             <p className="text-[12px] leading-[15px] text-text-muted">Barang tidak dikeluarkan hanya karena UMKM sudah membayar.</p>
+            {lock !== "draf" && (
+              <Link href={`/pemeriksaan-exim/periksa?id=${encodeURIComponent(o.id)}`} className="w-fit text-[13px] font-medium text-brand underline underline-offset-4 hover:text-brand-hover">
+                Buka pemeriksaan EXIM
+              </Link>
+            )}
           </section>
 
           <section aria-label="Tindakan" className={`${panel} flex flex-col gap-3 p-[25px]`}>
-            <h2 className="text-[18px] font-medium leading-[22px]">Tindakan</h2>
+            <Title icon={ListChecks}>Tindakan</Title>
             {o.status === 0 && <p className="text-[13px] leading-5 text-text-muted">Menunggu pembayaran PJP. Pesanan baru bisa disiapkan setelah pembayaran masuk.</p>}
             {o.status === 1 && (
               <>

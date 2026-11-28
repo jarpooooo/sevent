@@ -1,6 +1,7 @@
 "use client";
 
 import { m as motion } from "motion/react";
+import { Download, Eye, FileText } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { panel } from "../../components/ui/styles";
@@ -11,7 +12,7 @@ import { LOTS } from "../../lib/data/seed/lots";
 import type { Order, Role } from "../../lib/domain/types";
 import { initialProfil, type Profil, useProfil } from "../akun/profil";
 import { ACCOUNTS } from "../auth/session";
-import { EMPTY_CUSTOMS, useLotCustomsStore } from "../pabrik/lotdoc";
+import { customsOf, useLotCustomsStore } from "../pabrik/lotdoc";
 
 /** Profil tersimpan, atau data akun demo bila belum pernah disimpan. */
 function usePartyProfile(role: Role): PartyProfile | null {
@@ -27,7 +28,6 @@ function usePartyProfile(role: Role): PartyProfile | null {
 export function useDocInput(order: Order): DocInput | null {
   const seller = usePartyProfile("pabrik");
   const buyer = usePartyProfile("umkm");
-  const exim = usePartyProfile("exim");
   const admin = usePartyProfile("admin");
   const store = useLotCustomsStore();
   return useMemo(() => {
@@ -37,12 +37,13 @@ export function useDocInput(order: Order): DocInput | null {
       lot: LOTS.find((l) => l.slug === order.slug),
       seller,
       buyer,
-      exim,
+      // petugas EXIM diambil dari profil pabrik (tanpa akun terpisah)
+      exim: seller.pabrik?.eximNama ? { ...seller, person: seller.pabrik.eximNama, jabatan: seller.pabrik.eximJabatan ?? "" } : null,
       admin,
-      customs: { ...EMPTY_CUSTOMS, ...store[order.slug] },
+      customs: customsOf(store, order.slug),
       now: new Date(),
     };
-  }, [order, seller, buyer, exim, admin, store]);
+  }, [order, seller, buyer, admin, store]);
 }
 
 /** Jumlah isian yang masih "Menunggu: ..." di dokumen, supaya pengguna tahu apa yang belum lengkap. */
@@ -59,7 +60,7 @@ export function pendingCount(ctx: Record<string, unknown>) {
 }
 
 const btn =
-  "h-10 rounded-[2px] border border-brand px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-soft disabled:opacity-50";
+  "inline-flex h-10 items-center gap-1.5 rounded-[2px] border border-brand px-4 text-[13px] font-semibold text-brand transition-colors hover:bg-brand-soft disabled:opacity-50";
 
 /**
  * Unduh dokumen pesanan (.docx) sesuai peran. Dokumen dihasilkan dari satu sumber data transaksi.
@@ -93,7 +94,10 @@ export default function DokumenMenu({ order, role, title = "Dokumen" }: { order:
 
   return (
     <section aria-label={title} className={`${panel} flex flex-col gap-4 p-[25px]`}>
-      <h2 className="text-[18px] font-medium leading-[22px]">{title}</h2>
+      <h2 className="flex items-center gap-2.5 text-[18px] font-medium leading-[22px]">
+        <FileText aria-hidden="true" className="size-[18px] shrink-0 text-brand" strokeWidth={1.8} />
+        {title}
+      </h2>
       <ul className="flex flex-col gap-3">
         {kinds.map((k) => {
           const spec = DOC_SPECS[k];
@@ -109,11 +113,13 @@ export default function DokumenMenu({ order, role, title = "Dokumen" }: { order:
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={`/dokumen?id=${encodeURIComponent(order.id)}&jenis=${k}`}
-                  className="inline-flex h-10 items-center rounded-[2px] bg-brand px-4 text-[13px] font-semibold text-surface transition-colors hover:bg-brand-hover"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-[2px] bg-brand px-4 text-[13px] font-semibold text-surface transition-colors hover:bg-brand-hover"
                 >
+                  <Eye aria-hidden="true" className="size-4" strokeWidth={1.9} />
                   Pratinjau
                 </Link>
                 <motion.button type="button" whileTap={{ scale: 0.97 }} disabled={busy !== null} onClick={() => download(k)} className={btn}>
+                  <Download aria-hidden="true" className="size-4" strokeWidth={1.9} />
                   {busy === k ? "Menyiapkan..." : "Unduh .docx"}
                 </motion.button>
               </div>

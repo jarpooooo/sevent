@@ -9,10 +9,9 @@ import { HOME_OF, takeLogoutFlag, useRole } from "./session";
  *  - "not-pabrik": halaman pembeli. Terbuka untuk tamu dan UMKM; pabrik, admin, dan EXIM dialihkan ke halaman kerjanya.
  *  - "pabrik"    : halaman pabrik. Peran lain dialihkan ke halaman kerjanya, tamu ke halaman masuk.
  *  - "admin"     : panel admin. Sama seperti di atas.
- *  - "exim"      : panel EXIM. Sama seperti di atas.
  *  - "login"     : halaman akun. Tamu dialihkan ke halaman masuk.
  */
-type Mode = "not-pabrik" | "pabrik" | "admin" | "exim" | "login";
+type Mode = "not-pabrik" | "pabrik" | "admin" | "login";
 
 export default function RoleGuard({ mode, children }: { mode: Mode; children: React.ReactNode }) {
   const role = useRole();

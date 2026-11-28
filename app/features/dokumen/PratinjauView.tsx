@@ -26,7 +26,6 @@ function backOf(role: Role, id: string): { href: string; label: string } {
   const q = encodeURIComponent(id);
   if (role === "umkm") return { href: `/pesanan-saya/detail?id=${q}`, label: "Kembali ke detail pesanan" };
   if (role === "pabrik") return { href: `/pesanan-masuk/detail?id=${q}`, label: "Kembali ke detail pesanan" };
-  if (role === "exim") return { href: `/exim/pesanan?id=${q}`, label: "Kembali ke periksa pesanan" };
   return { href: "/admin", label: "Kembali ke panel admin" };
 }
 

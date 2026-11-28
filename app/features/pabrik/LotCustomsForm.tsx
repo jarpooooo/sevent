@@ -1,6 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
+import { FileSearch } from "lucide-react";
+import Title from "./Title";
 import { inputBox, panel } from "../../components/ui/styles";
 import type { LotCustoms } from "../../lib/domain/types";
 import { Field, Grid, Select } from "../akun/FormParts";
@@ -19,7 +21,11 @@ const hsValid = (v: string) => /^\d{4}([.\s]?\d{2}){0,3}$/.test(v.trim());
  */
 export default function LotCustomsForm({ slug, title, by }: { slug: string; title: string; by: "pabrik" | "exim" }) {
   const id = useId();
-  const [c, setC] = useState<LotCustoms>(() => readLotCustoms(slug));
+  // Negara asal diusulkan "Indonesia" bila asal bahan domestik dan kolomnya masih kosong.
+  const [c, setC] = useState<LotCustoms>(() => {
+    const d = readLotCustoms(slug);
+    return d.asalBahan === "domestik" && !d.negaraAsal.trim() ? { ...d, negaraAsal: "Indonesia" } : d;
+  });
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
 
@@ -47,7 +53,7 @@ export default function LotCustomsForm({ slug, title, by }: { slug: string; titl
   return (
     <section aria-label="Data kepabeanan lot" className={`${panel} flex flex-col gap-5 p-[25px]`}>
       <div className="flex flex-col gap-1">
-        <h2 className="text-[18px] font-medium leading-[22px]">Data kepabeanan lot</h2>
+        <Title icon={FileSearch}>Data kepabeanan lot</Title>
         <p className="max-w-[640px] text-[13px] leading-5 text-text-muted">
           {title}. {by === "pabrik" ? "Diisi pabrik, lalu dikonfirmasi EXIM." : "Dikonfirmasi EXIM; pabrik mengisi data awalnya."} Tidak ada
           isian bawaan: HS Code, negara asal, dan nomor dokumen hanya dari data nyata.
@@ -61,7 +67,7 @@ export default function LotCustomsForm({ slug, title, by }: { slug: string; titl
           <input id={fid("negara")} className={inputBox} value={c.negaraAsal} onChange={(e) => set("negaraAsal", e.target.value)} />
         </Field>
         <Field label="Asal bahan" htmlFor={fid("asal")}>
-          <Select id={fid("asal")} value={c.asalBahan} onChange={(v) => set("asalBahan", v as LotCustoms["asalBahan"])} options={ASAL} placeholder="Pilih asal bahan" />
+          <Select id={fid("asal")} value={c.asalBahan} onChange={(v) => setC((p) => ({ ...p, asalBahan: v as LotCustoms["asalBahan"], negaraAsal: v === "domestik" && !p.negaraAsal.trim() ? "Indonesia" : p.negaraAsal }))} options={ASAL} placeholder="Pilih asal bahan" />
         </Field>
         <Field label="Berat kotor (kg)" error={errs.beratKotor} hint="Berat bersama kemasan." htmlFor={fid("kotor")}>
           <input id={fid("kotor")} className={`${inputBox} tabular-nums`} inputMode="decimal" value={c.beratKotor} onChange={(e) => set("beratKotor", e.target.value)} aria-invalid={!!errs.beratKotor} />

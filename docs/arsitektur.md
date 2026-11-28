@@ -8,13 +8,12 @@ Belum ada backend untuk pesanan, pembayaran, atau stok. Semua pesanan, profil, d
 
 ```
 app/
+  (admin)/      Dashboard admin: sidebar kiri tanpa navbar atas. /admin (ringkasan), /admin/umkm, /pabrik, /pesanan, dan detail tiap baris.
   (site)/
     (publik)/   Beranda, Alur kerja, Kontak
     (umkm)/     Katalog, Detail lot, Checkout, Pesanan saya (bayar, berhasil, detail)
-    (pabrik)/   Lot saya, Tambah lot, Pesanan masuk, Tagihan komisi
+    (pabrik)/   Lot saya, Tambah lot, Pesanan masuk, Pemeriksaan EXIM, Tagihan komisi
     (akun)/     Profil, Pratinjau dokumen (/dokumen)
-    (admin)/    Panel admin (verifikasi akun, konfirmasi kurir, dokumen)
-    (exim)/     Panel EXIM (Compliance Lock, klasifikasi, dokumen pengeluaran, fiskal)
     masuk/      Masuk dan daftar
   features/     Satu folder per area: publik, umkm, pabrik, admin, akun, auth
   components/   ui, mosaic, motion, layout (Navbar), brand
@@ -32,8 +31,9 @@ Route group `(publik)`, `(umkm)`, `(pabrik)`, `(admin)`, `(akun)` tidak muncul d
 ## Peran
 
 - **UMKM** dan **Pabrik**: bisa masuk dengan Google (peran disimpan di Firestore `users/{uid}`) atau akun demo.
-- **Admin** dan **EXIM**: hanya akun demo (tautan di halaman Masuk). Admin memverifikasi akun dan meneruskan konfirmasi kurir. EXIM memeriksa
-  persyaratan pengeluaran barang; hanya EXIM yang bisa menetapkan "Persyaratan terpenuhi".
+- **Admin**: hanya akun demo (tautan di halaman Masuk). Memverifikasi akun dan meneruskan konfirmasi kurir.
+- **EXIM** bukan akun terpisah: petugas EXIM adalah staf pabrik. Menu "Pemeriksaan EXIM" ada di navbar pabrik (`/pemeriksaan-exim`), nama dan jabatan
+  petugas diisi di profil pabrik dan tercetak sebagai pemeriksa di dokumen. Batasan demo: satu orang bisa menyiapkan dan menyatakan terpenuhi.
 
 ## Alur pesanan (6 status)
 

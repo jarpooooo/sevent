@@ -17,6 +17,23 @@ export const EMPTY_CUSTOMS: LotCustoms = {
   dokPemasukan: { jenis: "", nomor: "", tanggal: "" },
 };
 
+/**
+ * Data kepabeanan contoh untuk lot demo, dipakai selama pabrik belum menyimpan datanya sendiri.
+ * Rekaan untuk mencoba alur: HS Code, kemasan, dan dokumen ini bukan data nyata. Negara asal sengaja kosong:
+ * diturunkan dari asal bahan (domestik jadi Indonesia).
+ */
+export const DEMO_CUSTOMS: Partial<LotCustoms> = {
+  hsCode: "6310.10.00",
+  asalBahan: "domestik",
+  kemasanJenis: "karung",
+  kemasanJumlah: "5",
+  beratKotor: "26",
+  dokPemasukan: { jenis: "Dokumen contoh", nomor: "CONTOH-IN-001", tanggal: "2026-10-15" },
+};
+
+/** Data lot: bawaan kosong, lalu contoh demo, lalu apa yang sudah disimpan pabrik. */
+export const customsOf = (store: Record<string, LotCustoms>, slug: string): LotCustoms => ({ ...EMPTY_CUSTOMS, ...DEMO_CUSTOMS, ...store[slug] });
+
 const KEY = "kn-lotdoc-v1";
 type Store = Record<string, LotCustoms>;
 const EMPTY_STORE: Store = {};
@@ -46,7 +63,7 @@ function subscribe(cb: () => void) {
   };
 }
 
-export const readLotCustoms = (slug: string): LotCustoms => ({ ...EMPTY_CUSTOMS, ...read()[slug] });
+export const readLotCustoms = (slug: string): LotCustoms => customsOf(read(), slug);
 
 export function saveLotCustoms(slug: string, c: LotCustoms) {
   window.localStorage.setItem(KEY, JSON.stringify({ ...read(), [slug]: c }));
@@ -57,4 +74,5 @@ export function saveLotCustoms(slug: string, c: LotCustoms) {
 export const useLotCustomsStore = () => useSyncExternalStore(subscribe, read, () => EMPTY_STORE);
 
 /** true bila minimal HS Code, negara asal, dan asal bahan sudah diisi. */
-export const customsComplete = (c: LotCustoms) => !!c.hsCode.trim() && !!c.negaraAsal.trim() && !!c.asalBahan;
+/** Negara asal boleh kosong bila asal bahan domestik: dokumen menuliskannya sebagai Indonesia. */
+export const customsComplete = (c: LotCustoms) => !!c.hsCode.trim() && !!c.asalBahan && (!!c.negaraAsal.trim() || c.asalBahan === "domestik");

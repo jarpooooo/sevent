@@ -224,7 +224,8 @@ export default function StickyScrollStory({
   const dotCount = texts.length + 1;
   const wrapRef = useRef<HTMLDivElement>(null);
   const reduce = !!useSafeReducedMotion();
-  const cols = useSyncExternalStore(subscribeCols, getCols, () => 12);
+  // 0 di server dan saat hidrasi: jumlah kolom bergantung lebar layar, jadi mosaik baru dipasang setelah diketahui (tanpa pergeseran tata letak).
+  const cols = useSyncExternalStore(subscribeCols, getCols, () => 0);
   const [active, setActive] = useState(0);
 
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ["start start", "end end"] });
@@ -264,13 +265,20 @@ export default function StickyScrollStory({
         </motion.div>
 
         {/* Mosaik penutup */}
-        <TileGrid cols={cols} total={total} progress={scrollYProgress} reduce={reduce} />
-        {/* Garis antar tile selalu terlihat */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px]"
-          style={gridLines(cols, ROWS)}
-        />
+        {cols ? (
+          <>
+            <TileGrid cols={cols} total={total} progress={scrollYProgress} reduce={reduce} />
+            {/* Garis antar tile selalu terlihat */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px]"
+              style={gridLines(cols, ROWS)}
+            />
+          </>
+        ) : (
+          // penutup polos sementara (sama dengan keadaan awal "semua tertutup"), tidak memengaruhi tata letak
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px] bg-surface" />
+        )}
 
         {/* Bar atas menutup foto di bawah navbar */}
         <div className="absolute inset-x-0 top-0 h-[72px] bg-surface" />
